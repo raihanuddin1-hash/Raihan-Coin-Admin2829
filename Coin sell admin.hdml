@@ -1,0 +1,3392 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#f4f6fb" />
+<title>🔐 Admin — GBS BD COIN BAY</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root{
+  --bg:#f4f6fb; --card:#ffffff; --border:#e8ecf5;
+  --text:#0e1533; --muted:#7a8ba8;
+  --primary:#2f88ff;
+  --success:#22c55e; --success-bg:#dcfce7;
+  --danger:#ef4444; --danger-bg:#fee2e2;
+  --warning:#f59e0b; --warning-bg:#fef3c7;
+  --purple:#8b5cf6; --purple-bg:#ede9fe;
+  --grad-blue:linear-gradient(135deg,#2f88ff 0%,#5aa4ff 100%);
+  --grad-purple:linear-gradient(135deg,#8b5cf6,#a855f7);
+  --grad-green:linear-gradient(135deg,#22c55e,#16a34a);
+  --grad-orange:linear-gradient(135deg,#f59e0b,#f97316);
+  --grad-red:linear-gradient(135deg,#ef4444,#dc2626);
+}
+html,body{
+  font-family:'Inter','Segoe UI','Hind Siliguri',system-ui,sans-serif;
+  background:var(--bg); color:var(--text);
+  min-height:100vh; font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+img{ display:block; max-width:100%; }
+button{ font-family:inherit; cursor:pointer; border:none; outline:none; }
+input,textarea,select{ font-family:inherit; outline:none; border:none; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:4px; }
+
+/* LOGIN */
+.login-screen{
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(160deg,#fff 0%,#e8f0ff 50%,#fff 100%);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.login-box{
+  background:#fff; border:1px solid var(--border);
+  border-radius:24px; padding:34px 26px;
+  max-width:420px; width:100%; text-align:center;
+  box-shadow:0 20px 60px rgba(47,136,255,0.15);
+  position:relative; overflow:hidden;
+}
+.login-box::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:5px;
+  background:linear-gradient(90deg,#2f88ff,#8b5cf6,#22c55e,#f59e0b);
+}
+.login-logo{
+  width:80px; height:80px; border-radius:22px;
+  background:var(--grad-blue);
+  display:flex; align-items:center; justify-content:center;
+  font-size:42px; margin:0 auto 20px;
+}
+.login-title{ font-size:24px; font-weight:800; margin-bottom:6px; }
+.login-sub{ font-size:13px; color:var(--muted); margin-bottom:26px; }
+.login-input{
+  width:100%; background:#f7f9fc; border:1.5px solid #e2e8f0;
+  border-radius:12px; padding:14px 16px;
+  font-size:15px; text-align:center; letter-spacing:2px;
+  margin-bottom:14px;
+}
+.login-input:focus{ border-color:var(--primary); background:#fff; }
+.login-error{ color:var(--danger); font-size:12px; font-weight:600; margin-bottom:12px; display:none; }
+.login-btn{
+  width:100%; padding:14px; border-radius:12px;
+  background:var(--grad-blue); color:#fff;
+  font-size:15px; font-weight:800;
+}
+
+#adminApp{ display:none; min-height:100vh; padding-bottom:80px; }
+#adminApp.active{ display:block; }
+
+/* TOPBAR */
+.topbar{
+  background:#fff; border-bottom:1px solid var(--border);
+  padding:14px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:50;
+}
+.topbar-title{ display:flex; align-items:center; gap:10px; font-size:16px; font-weight:800; }
+.topbar-title .tico{
+  width:38px; height:38px; border-radius:11px;
+  background:var(--grad-blue);
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px;
+}
+.logout-btn{
+  background:var(--danger-bg); color:var(--danger);
+  padding:8px 14px; border-radius:10px;
+  font-size:12px; font-weight:700;
+}
+
+/* TABS */
+.tabs{
+  display:flex; gap:6px; padding:12px;
+  overflow-x:auto; position:sticky; top:66px; z-index:49;
+  background:var(--bg);
+}
+.tabs::-webkit-scrollbar{ display:none; }
+.tab-btn{
+  flex-shrink:0; background:#fff; color:var(--muted);
+  padding:9px 16px; border-radius:20px;
+  font-size:12.5px; font-weight:700;
+  border:1.5px solid var(--border);
+  white-space:nowrap; display:flex; align-items:center; gap:6px;
+}
+.tab-btn.active{
+  background:var(--grad-blue); color:#fff; border-color:transparent;
+}
+.tab-content{ display:none; padding:16px; }
+.tab-content.active{ display:block; }
+
+.stats-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:20px; }
+@media(min-width:720px){ .stats-grid{ grid-template-columns:repeat(4,1fr); } }
+.stat-box{
+  background:#fff; border:1px solid var(--border);
+  border-radius:16px; padding:16px;
+  position:relative; overflow:hidden;
+}
+.stat-box::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--grad-blue);
+}
+.stat-box[data-color="green"]::before{ background:var(--grad-green); }
+.stat-box[data-color="orange"]::before{ background:var(--grad-orange); }
+.stat-box[data-color="red"]::before{ background:var(--grad-red); }
+.stat-box[data-color="purple"]::before{ background:var(--grad-purple); }
+.stat-icon{ font-size:22px; margin-bottom:8px; }
+.stat-val{ font-size:24px; font-weight:900; }
+.stat-lbl{ font-size:11px; color:var(--muted); margin-top:3px; font-weight:600; }
+
+.section-title{
+  font-size:16px; font-weight:800;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; flex-wrap:wrap; gap:8px;
+}
+.section-title .st-left{ display:flex; align-items:center; gap:9px; }
+.section-title .st-left::before{
+  content:''; width:4px; height:20px;
+  background:var(--grad-blue); border-radius:2px;
+}
+
+.card{
+  background:#fff; border:1px solid var(--border);
+  border-radius:16px; padding:16px; margin-bottom:12px;
+}
+.card-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px; gap:10px; flex-wrap:wrap;
+}
+.card-title{
+  font-size:15px; font-weight:800;
+  display:flex; align-items:center; gap:10px;
+  min-width:0; flex:1;
+}
+.card-title img{
+  width:42px; height:42px; border-radius:12px;
+  object-fit:cover; flex-shrink:0;
+  border:1px solid var(--border);
+}
+.card-title-text{ display:flex; flex-direction:column; min-width:0; }
+.card-title-text .ct-name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-title-text .ct-sub{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+.badge{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:20px;
+  font-size:10.5px; font-weight:700;
+}
+.badge-active{ background:var(--success-bg); color:var(--success); }
+.badge-stop{ background:var(--danger-bg); color:var(--danger); }
+.badge-pending{ background:var(--warning-bg); color:#a16207; }
+.badge-processing{ background:#dbeafe; color:#1d4ed8; }
+.badge-completed{ background:var(--success-bg); color:#15803d; }
+.badge-rejected{ background:var(--danger-bg); color:#b91c1c; }
+.badge-cancelled{ background:#f1f5f9; color:#64748b; }
+.badge-sold{ background:#f3e8ff; color:#7e22ce; }
+.badge-cat{ background:#fce7f3; color:#be185d; }
+.badge-meta{ background:linear-gradient(135deg,#e0e7ff,#c7d2fe); color:#3730a3; }
+
+.btn{
+  padding:10px 16px; border-radius:10px;
+  font-size:12.5px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  font-family:inherit;
+}
+.btn-primary{ background:var(--grad-blue); color:#fff; }
+.btn-success{ background:var(--success-bg); color:var(--success); }
+.btn-danger{ background:var(--danger-bg); color:var(--danger); }
+.btn-warning{ background:var(--warning-bg); color:#a16207; }
+.btn-purple{ background:var(--purple-bg); color:var(--purple); }
+.btn-ghost{ background:#f1f5f9; color:#3a4a68; border:1px solid var(--border); }
+.btn-block{ width:100%; padding:14px; }
+.btn-icon{ padding:8px 12px; font-size:12px; }
+
+.form-row{ margin-bottom:14px; }
+.form-row label{
+  display:block; font-size:12px; font-weight:700;
+  color:#3a4a68; margin-bottom:6px;
+}
+.form-input, .form-textarea, .form-select{
+  width:100%; background:#f7f9fc;
+  border:1.5px solid #e2e8f0; border-radius:10px;
+  padding:11px 13px; font-size:13.5px; font-weight:500;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus{
+  border-color:var(--primary); background:#fff;
+}
+.form-textarea{ resize:vertical; min-height:70px; font-family:inherit; }
+.form-grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.category-list{
+  display:grid; grid-template-columns:repeat(2,1fr);
+  gap:10px; margin-bottom:14px;
+}
+@media(min-width:600px){ .category-list{ grid-template-columns:repeat(3,1fr); } }
+.category-card{
+  background:#fff; border:1.5px solid var(--border);
+  border-radius:14px; padding:12px;
+  text-align:center; cursor:pointer;
+  position:relative;
+}
+.category-card .cc-ico{ font-size:26px; margin-bottom:6px; }
+.category-card .cc-name{
+  font-size:12.5px; font-weight:800;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.category-card .cc-count{ font-size:10px; color:var(--muted); margin-top:3px; font-weight:700; }
+.category-card .cc-del{
+  position:absolute; top:6px; right:6px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--danger-bg); color:var(--danger);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; border:none; cursor:pointer; font-family:inherit;
+}
+
+.file-upload-wrap{
+  display:flex; gap:10px; align-items:flex-start;
+  padding:12px; background:#f7f9fc;
+  border:1.5px dashed #cbd5e1; border-radius:12px;
+  cursor:pointer;
+}
+.file-upload-wrap.has-image{ background:#fff; border-style:solid; border-color:var(--success); }
+.file-upload-icon{
+  width:44px; height:44px; border-radius:12px;
+  background:var(--grad-purple);
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; color:#fff; flex-shrink:0;
+}
+.file-upload-info{ flex:1; min-width:0; }
+.file-upload-title{ font-size:13px; font-weight:800; }
+.file-upload-sub{ font-size:11px; color:var(--muted); margin-top:3px; font-weight:500; }
+.file-preview{
+  margin-top:10px; padding:10px; background:#fff;
+  border:1px solid var(--border); border-radius:12px;
+  position:relative; display:none;
+}
+.file-preview.show{ display:block; }
+.file-preview img{ width:100%; max-height:180px; object-fit:contain; border-radius:8px; }
+.file-preview-remove{
+  position:absolute; top:16px; right:16px;
+  width:32px; height:32px; border-radius:50%;
+  background:rgba(239,68,68,0.9); color:#fff;
+  font-size:16px; display:flex; align-items:center; justify-content:center;
+  border:2px solid #fff; cursor:pointer; font-family:inherit;
+}
+
+.filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.filter-chip{
+  background:#fff; color:var(--muted);
+  padding:8px 14px; border-radius:20px;
+  font-size:11.5px; font-weight:700;
+  border:1.5px solid var(--border); font-family:inherit;
+}
+.filter-chip.active{ background:var(--primary); color:#fff; border-color:transparent; }
+.search-box{
+  width:100%; background:#fff;
+  border:1.5px solid var(--border); border-radius:12px;
+  padding:11px 14px; font-size:13px;
+  margin-bottom:14px; font-family:inherit;
+}
+
+.order-item{
+  background:#fff; border:1px solid var(--border);
+  border-radius:14px; padding:14px; margin-bottom:10px;
+  cursor:pointer;
+}
+.order-item-top{
+  display:flex; justify-content:space-between;
+  align-items:flex-start; gap:10px; margin-bottom:10px;
+}
+.order-item-id{ font-size:12px; font-weight:800; color:var(--primary); }
+.order-item-sub{ font-size:11px; color:var(--muted); margin-top:2px; }
+.order-item-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+  padding-top:10px; border-top:1px dashed var(--border); font-size:11.5px;
+}
+.oi-label{ color:var(--muted); font-size:10px; margin-bottom:2px; font-weight:600; }
+.oi-value{ font-weight:700; }
+
+.modal{
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(15,23,42,0.55); backdrop-filter:blur(8px);
+  display:none; align-items:center; justify-content:center; padding:16px;
+}
+.modal.show{ display:flex; }
+.modal-content{
+  background:#fff; border:1px solid var(--border);
+  border-radius:20px; max-width:600px; width:100%;
+  max-height:90vh; overflow-y:auto; padding:22px;
+}
+.modal-head{
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:18px;
+}
+.modal-title{ font-size:17px; font-weight:800; }
+.modal-close{
+  width:34px; height:34px; border-radius:50%;
+  background:#f1f5f9; color:var(--text);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-family:inherit;
+}
+.modal-actions{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+.modal-actions .btn{ flex:1; padding:13px; font-size:13.5px; min-width:100px; }
+
+.detail-row{
+  display:flex; justify-content:space-between;
+  padding:9px 0; border-bottom:1px solid var(--border); font-size:12.5px;
+}
+.detail-row:last-child{ border-bottom:none; }
+.detail-row .dr-label{ color:var(--muted); font-weight:600; flex-shrink:0; }
+.detail-row .dr-value{ font-weight:700; text-align:right; word-break:break-all; max-width:60%; }
+.detail-image{
+  width:100%; max-height:280px; object-fit:contain;
+  border-radius:12px; border:1px solid var(--border);
+  background:#f7f9fc; margin-top:8px;
+}
+
+.pkg-builder{ margin-top:10px; }
+.pkg-builder-row{
+  display:grid; grid-template-columns:1fr 1fr auto;
+  gap:8px; margin-bottom:8px; align-items:center;
+}
+.pkg-builder-row input{ padding:9px 11px; font-size:13px; }
+
+.cat-fields-section{
+  background:#f7f9fc;
+  border:1.5px solid #e2e8f0;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
+}
+.cat-fields-section .cfs-title{
+  font-size:13px; font-weight:800; color:var(--primary);
+  margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+}
+.cat-fields-section .cfs-hint{
+  font-size:11px; color:var(--muted); margin-top:4px;
+}
+
+#toast{
+  position:fixed; top:20px; left:50%;
+  transform:translateX(-50%) translateY(-100px);
+  z-index:9999; background:#0e1533; color:#fff;
+  border-radius:12px; padding:12px 18px;
+  font-size:13px; font-weight:700;
+  box-shadow:0 16px 40px rgba(0,0,0,0.25);
+  transition:.35s; display:flex; align-items:center; gap:9px;
+  max-width:90vw;
+}
+#toast.show{ transform:translateX(-50%) translateY(0); }
+#toast.ok{ background:#15803d; }
+#toast.err{ background:#b91c1c; }
+#toast.info{ background:#1e40af; }
+
+.empty{
+  padding:44px 20px; text-align:center;
+  color:var(--muted); background:#fff;
+  border:1px solid var(--border); border-radius:16px;
+}
+.empty .eico{ font-size:44px; margin-bottom:10px; opacity:.5; }
+.empty .etxt{ font-size:13px; font-weight:600; }
+
+.sk{
+  background:linear-gradient(90deg,#e9eef7 25%,#f4f6fb 50%,#e9eef7 75%);
+  background-size:200% 100%;
+  animation:skl 1.4s infinite; border-radius:12px;
+}
+@keyframes skl{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+.sk-block{ height:88px; margin-bottom:12px; }
+
+.tip-box{
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+  border:1px solid #bfdbfe; border-radius:12px;
+  padding:12px; margin-bottom:14px;
+  font-size:12px; color:#1e40af; line-height:1.6;
+}
+.tip-box b{ color:#1e3a8a; }
+.tip-box code{
+  background:#1e3a8a; color:#fff;
+  padding:2px 6px; border-radius:4px;
+  font-size:11px;
+}
+
+.meta-account-row{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 12px; background:#fff;
+  border:1px solid var(--border); border-radius:10px;
+  margin-bottom:8px; font-size:12px;
+  gap:10px;
+}
+.meta-account-row.sold{
+  background:#fef2f2; border-color:#fecaca;
+}
+.meta-account-row .ma-user{ font-weight:800; color:#3730a3; flex:1; word-break:break-all; }
+.meta-account-row .ma-pass{ color:#7c3aed; font-family:monospace; font-size:11px; flex:1; word-break:break-all; }
+.meta-account-row .ma-status{
+  font-size:10px; padding:3px 8px; border-radius:10px; font-weight:700;
+}
+.meta-account-row .ma-status.available{ background:#dcfce7; color:#15803d; }
+.meta-account-row .ma-status.sold{ background:#fee2e2; color:#b91c1c; }
+
+/* RANGE BUILDER */
+.range-builder-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 0.8fr auto;
+  gap:6px;
+  margin-bottom:8px;
+  align-items:center;
+  padding:9px;
+  background:#fff;
+  border:1.5px solid #dbeafe;
+  border-radius:10px;
+}
+.range-builder-row input{
+  padding:8px 9px;
+  font-size:12.5px;
+  background:#f7f9fc;
+  border:1px solid #e2e8f0;
+  border-radius:8px;
+  width:100%;
+  font-family:inherit;
+}
+.range-builder-row input:focus{
+  border-color:var(--primary);
+  background:#fff;
+}
+.range-builder-row .rb-label{
+  font-size:9.5px;
+  font-weight:800;
+  color:#1e40af;
+  text-align:center;
+  margin-bottom:2px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.range-builder-row .rb-del{
+  width:34px;height:34px;
+  border-radius:9px;
+  background:var(--danger-bg);
+  color:var(--danger);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;border:none;cursor:pointer;font-family:inherit;
+}
+@media(max-width:600px){
+  .range-builder-row{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+}
+@media(max-width:420px){
+  .form-grid-2{ grid-template-columns:1fr; }
+}
+
+/* CREDIT ALERT */
+.credit-alert{
+  background:linear-gradient(135deg,#ecfdf5,#f0fdf4);
+  border:1.5px solid #bbf7d0; border-radius:12px;
+  padding:12px; margin-top:12px;
+  display:flex; gap:10px; align-items:flex-start;
+}
+.credit-alert .ca-ico{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--grad-green);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#fff;flex-shrink:0;
+}
+.credit-alert .ca-content{flex:1;min-width:0;}
+.credit-alert .ca-title{font-size:12.5px;font-weight:800;color:#15803d;}
+.credit-alert .ca-sub{font-size:11px;color:#166534;margin-top:3px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🔐</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">GBS BD COIN BAY</div>
+    <input type="password" id="loginPass" class="login-input" placeholder="পাসওয়ার্ড দিন" autocomplete="off" />
+    <div class="login-error" id="loginError">❌ পাসওয়ার্ড ভুল</div>
+    <button class="login-btn" onclick="doLogin()">🔓 Login</button>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp">
+  <div class="topbar">
+    <div class="topbar-title">
+      <div class="tico">💎</div>
+      <div>Admin Panel</div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logout ➜</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" data-tab="orders">📦 Orders</button>
+    <button class="tab-btn" data-tab="categories">🗂️ Categories</button>
+    <button class="tab-btn" data-tab="shop">🛒 Products</button>
+    <button class="tab-btn" data-tab="meta">🎭 Meta Sell</button>
+    <button class="tab-btn" data-tab="addmoney">➕ Add Money</button>
+    <button class="tab-btn" data-tab="withdraw">💸 Withdraw</button>
+    <button class="tab-btn" data-tab="apps">💰 Coin Apps</button>
+    <button class="tab-btn" data-tab="payments">💳 Payments</button>
+    <button class="tab-btn" data-tab="tutorials">🎥 Tutorials</button>
+    <button class="tab-btn" data-tab="reviews">⭐ Reviews</button>
+    <button class="tab-btn" data-tab="users">👥 Users</button>
+    <button class="tab-btn" data-tab="transactions">💳 Transactions</button>
+    <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="tab-content active" id="tab-dashboard">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="section-title"><div class="st-left">🔔 Recent Orders</div></div>
+    <div id="recentOrders"></div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="tab-content" id="tab-orders">
+    <div class="section-title">
+      <div class="st-left">📦 All Orders</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadOrders()">🔄</button>
+    </div>
+    <input type="text" id="orderSearch" class="search-box" placeholder="🔍 Order ID / Telegram ID / Username..." />
+    <div class="filters" id="orderFilters">
+      <button class="filter-chip active" data-status="all">All</button>
+      <button class="filter-chip" data-status="pending">🟡 Pending</button>
+      <button class="filter-chip" data-status="processing">🔵 Processing</button>
+      <button class="filter-chip" data-status="completed">🟢 Completed</button>
+      <button class="filter-chip" data-status="rejected">🔴 Rejected</button>
+    </div>
+    <div id="ordersList"></div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="tab-content" id="tab-categories">
+    <div class="section-title">
+      <div class="st-left">🗂️ Categories</div>
+      <button class="btn btn-primary btn-icon" onclick="openCategoryModal()">➕ Add Category</button>
+    </div>
+    <div class="tip-box">
+      💡 <b>Category Type:</b><br>
+      • <b>🌐 Proxy</b> → Product Add-এ Host, Port, User, Pass Fields আসবে<br>
+      • <b>🔒 VPN</b> → Email, Password Fields আসবে<br>
+      • <b>📦 Package</b> → শুধু Package Fields<br>
+      • <b>🎭 Meta Account Sell</b> → Google Sheet থেকে অটো অ্যাকাউন্ট ডেলিভারি
+    </div>
+    <div class="category-list" id="categoryList"></div>
+  </div>
+
+  <!-- SHOP PRODUCTS -->
+  <div class="tab-content" id="tab-shop">
+    <div class="section-title">
+      <div class="st-left">🛒 Products</div>
+      <button class="btn btn-primary btn-icon" onclick="openShopModal()">➕ Add Product</button>
+    </div>
+    <div class="tip-box">
+      💡 Category সিলেক্ট করলে সেই Type-এর Fields Auto দেখাবে।
+    </div>
+    <div class="filters" id="shopFilters">
+      <button class="filter-chip active" data-cat="all">All</button>
+      <button class="filter-chip" data-cat="__sold">✅ Sold</button>
+    </div>
+    <div id="shopList"></div>
+  </div>
+
+  <!-- META SELL -->
+  <div class="tab-content" id="tab-meta">
+    <div class="section-title">
+      <div class="st-left">🎭 Meta Account Sell</div>
+      <button class="btn btn-primary btn-icon" onclick="openMetaModal()">➕ Add Meta Product</button>
+    </div>
+    <div class="tip-box">
+      💡 <b>কিভাবে কাজ করে:</b><br>
+      • প্রতিটি Meta Product একটি <b>Google Sheet</b> বা Manual List এর সাথে সংযুক্ত<br>
+      • শিটে কলাম: <code>username,password</code><br>
+      • ইউজার কিনলে অটো একটি অ্যাকাউন্ট SOLD হবে
+    </div>
+    <div class="stats-grid" id="metaStatsGrid"></div>
+    <div class="section-title" style="margin-top:16px;">
+      <div class="st-left">📦 Meta Products</div>
+    </div>
+    <div id="metaProductsList"></div>
+    <div class="section-title" style="margin-top:20px;">
+      <div class="st-left">🧾 Purchase History</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadMetaPurchases()">🔄</button>
+    </div>
+    <div class="filters" id="metaPurchaseFilters">
+      <button class="filter-chip active" data-mfilter="all">All</button>
+      <button class="filter-chip" data-mfilter="today">📅 Today</button>
+      <button class="filter-chip" data-mfilter="week">📆 This Week</button>
+    </div>
+    <div id="metaPurchasesList"></div>
+  </div>
+
+  <!-- ADD MONEY -->
+  <div class="tab-content" id="tab-addmoney">
+    <div class="section-title">
+      <div class="st-left">➕ Add Money Requests</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadAddMoney()">🔄</button>
+    </div>
+    <div class="filters" id="amFilters">
+      <button class="filter-chip active" data-astatus="pending">⏳ Pending</button>
+      <button class="filter-chip" data-astatus="completed">✅ Approved</button>
+      <button class="filter-chip" data-astatus="rejected">❌ Rejected</button>
+      <button class="filter-chip" data-astatus="all">📋 All</button>
+    </div>
+    <div id="addMoneyList"></div>
+  </div>
+
+  <!-- WITHDRAW -->
+  <div class="tab-content" id="tab-withdraw">
+    <div class="section-title">
+      <div class="st-left">💸 Withdraw Requests</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadWithdraws()">🔄</button>
+    </div>
+    <div class="filters" id="wdFilters">
+      <button class="filter-chip active" data-wstatus="pending">⏳ Pending</button>
+      <button class="filter-chip" data-wstatus="completed">✅ Approved</button>
+      <button class="filter-chip" data-wstatus="rejected">❌ Rejected</button>
+      <button class="filter-chip" data-wstatus="all">📋 All</button>
+    </div>
+    <div id="withdrawList"></div>
+  </div>
+
+  <!-- COIN APPS -->
+  <div class="tab-content" id="tab-apps">
+    <div class="section-title">
+      <div class="st-left">💰 Coin Sell Apps</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-warning btn-icon" onclick="seedDefaults()">⚡ Seed</button>
+        <button class="btn btn-primary btn-icon" onclick="openAppModal()">➕</button>
+      </div>
+    </div>
+    <div class="tip-box">
+      💡 <b>Price Range System:</b> প্রতিটি App-এ ৪টি Range থাকবে। User Coin Sell করার সময় Range সিলেক্ট করবে এবং সেই Range-এর Rate apply হবে।
+    </div>
+    <div id="appsList"></div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="tab-content" id="tab-payments">
+    <div class="section-title">
+      <div class="st-left">💳 Payment Methods</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-warning btn-icon" onclick="seedPayments()">⚡ Seed</button>
+        <button class="btn btn-primary btn-icon" onclick="openPayModal()">➕</button>
+      </div>
+    </div>
+    <div id="paymentsList"></div>
+  </div>
+
+  <!-- TUTORIALS -->
+  <div class="tab-content" id="tab-tutorials">
+    <div class="section-title">
+      <div class="st-left">🎥 Tutorials</div>
+      <button class="btn btn-primary btn-icon" onclick="openTutModal()">➕</button>
+    </div>
+    <div id="tutorialsList"></div>
+  </div>
+
+  <!-- REVIEWS -->
+  <div class="tab-content" id="tab-reviews">
+    <div class="section-title">
+      <div class="st-left">⭐ Reviews</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadReviews()">🔄</button>
+    </div>
+    <div class="filters" id="reviewFilters">
+      <button class="filter-chip active" data-rstatus="pending">⏳ Pending</button>
+      <button class="filter-chip" data-rstatus="approved">✅ Approved</button>
+      <button class="filter-chip" data-rstatus="all">📋 All</button>
+    </div>
+    <div id="reviewsList"></div>
+  </div>
+
+  <!-- USERS -->
+  <div class="tab-content" id="tab-users">
+    <div class="section-title">
+      <div class="st-left">👥 Users</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadUsers()">🔄</button>
+    </div>
+    <input type="text" id="userSearch" class="search-box" placeholder="🔍 Telegram ID / Username / Name..." />
+    <div id="usersList"></div>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="tab-content" id="tab-transactions">
+    <div class="section-title">
+      <div class="st-left">💳 All Transactions</div>
+      <button class="btn btn-ghost btn-icon" onclick="loadAllTransactions()">🔄</button>
+    </div>
+    <div class="filters" id="trxFilters">
+      <button class="filter-chip active" data-ttype="all">All</button>
+      <button class="filter-chip" data-ttype="add">➕ Add Money</button>
+      <button class="filter-chip" data-ttype="withdraw">💸 Withdraw</button>
+      <button class="filter-chip" data-ttype="shop">🛒 Shop</button>
+      <button class="filter-chip" data-ttype="meta">🎭 Meta</button>
+    </div>
+    <div id="transactionsList"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="tab-content" id="tab-settings">
+    <div class="section-title"><div class="st-left">⚙️ Site Settings</div></div>
+    <div class="card">
+      <div class="form-row"><label>App Name</label><input type="text" id="s_appName" class="form-input" /></div>
+      <div class="form-row"><label>Tagline</label><input type="text" id="s_tagline" class="form-input" /></div>
+      <div class="form-row">
+        <label>Logo</label>
+        <div class="file-upload-wrap" id="s_logo_wrap" onclick="document.getElementById('s_logo_file').click()">
+          <div class="file-upload-icon">🖼️</div>
+          <div class="file-upload-info">
+            <div class="file-upload-title">Tap to Upload Logo</div>
+            <div class="file-upload-sub">Max 15 MB (Auto Compress)</div>
+          </div>
+        </div>
+        <input type="file" id="s_logo_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 's_logo')" />
+        <div class="file-preview" id="s_logo_preview">
+          <img id="s_logo_preview_img" />
+          <button class="file-preview-remove" onclick="removeImagePreview('s_logo')" type="button">✕</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Splash Image</label>
+        <div class="file-upload-wrap" id="s_splashImage_wrap" onclick="document.getElementById('s_splashImage_file').click()">
+          <div class="file-upload-icon">🚀</div>
+          <div class="file-upload-info">
+            <div class="file-upload-title">Tap to Upload Splash</div>
+            <div class="file-upload-sub">Max 15 MB</div>
+          </div>
+        </div>
+        <input type="file" id="s_splashImage_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 's_splashImage')" />
+        <div class="file-preview" id="s_splashImage_preview">
+          <img id="s_splashImage_preview_img" />
+          <button class="file-preview-remove" onclick="removeImagePreview('s_splashImage')" type="button">✕</button>
+        </div>
+      </div>
+      <div class="form-row"><label>Support Channel URL</label><input type="url" id="s_supportChannelUrl" class="form-input" /></div>
+      <div class="form-row"><label>Join Button Text</label><input type="text" id="s_joinBtnText" class="form-input" /></div>
+      <div class="form-row"><label>Send Money Fee (৳)</label><input type="number" id="s_sendMoneyFee" class="form-input" /></div>
+      <div class="form-row"><label>Meta Account Default Price (৳)</label><input type="number" step="0.01" id="s_metaDefaultPrice" class="form-input" value="0.50" /></div>
+      <div class="form-row"><label>Notice</label><textarea id="s_notice" class="form-textarea"></textarea></div>
+      <div class="form-row"><label>Contact Info</label><input type="text" id="s_contactInfo" class="form-input" /></div>
+      <div class="form-row"><label>Footer Text</label><input type="text" id="s_footerText" class="form-input" /></div>
+      <div class="form-row">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" id="s_maintenanceMode" style="width:auto;" />
+          <span>🔧 Maintenance Mode</span>
+        </label>
+      </div>
+      <div class="form-row"><label>Maintenance Message</label><textarea id="s_maintenanceText" class="form-textarea"></textarea></div>
+      <button class="btn btn-primary btn-block" onclick="saveSettings()">💾 Save Settings</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal" id="categoryModal">
+  <div class="modal-content" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title" id="categoryModalTitle">➕ Add Category</div>
+      <button class="modal-close" onclick="closeModal('categoryModal')">✕</button>
+    </div>
+    <input type="hidden" id="cat_id" />
+    <div class="form-row">
+      <label>Category Name *</label>
+      <input type="text" id="cat_name" class="form-input" placeholder="Proxy / VPN / Meta Account" oninput="autoDetectIcon()" />
+    </div>
+    <div class="form-row">
+      <label>Icon (Emoji) *</label>
+      <input type="text" id="cat_icon" class="form-input" placeholder="🌐" maxlength="4" />
+    </div>
+    <div class="form-row">
+      <label>Category Type *</label>
+      <select id="cat_type" class="form-select">
+        <option value="proxy">🌐 Proxy (Host, Port, User, Pass)</option>
+        <option value="vpn">🔒 VPN (Email, Password)</option>
+        <option value="package">📦 Package Only</option>
+        <option value="meta">🎭 Meta Account Sell (Google Sheet)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('categoryModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCategory()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHOP PRODUCT MODAL -->
+<div class="modal" id="shopModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="shopModalTitle">➕ Add Product</div>
+      <button class="modal-close" onclick="closeModal('shopModal')">✕</button>
+    </div>
+    <input type="hidden" id="shop_id" />
+    <div class="form-row">
+      <label>Category *</label>
+      <select id="shop_category" class="form-select" onchange="updateProductFields()">
+        <option value="">-- Loading --</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Product Name *</label>
+      <input type="text" id="shop_name" class="form-input" placeholder="Product Name" />
+    </div>
+    <div class="form-row">
+      <label>Logo *</label>
+      <div class="file-upload-wrap" id="shop_logo_wrap" onclick="document.getElementById('shop_logo_file').click()">
+        <div class="file-upload-icon">🖼️</div>
+        <div class="file-upload-info">
+          <div class="file-upload-title">Tap to Upload Logo</div>
+          <div class="file-upload-sub">Max 15 MB</div>
+        </div>
+      </div>
+      <input type="file" id="shop_logo_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'shop_logo')" />
+      <div class="file-preview" id="shop_logo_preview">
+        <img id="shop_logo_preview_img" />
+        <button class="file-preview-remove" onclick="removeImagePreview('shop_logo')" type="button">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Brand / By *</label>
+      <input type="text" id="shop_proxyBy" class="form-input" placeholder="Garena / Rapid / Admin" />
+    </div>
+    <div class="cat-fields-section" id="dynamicFieldsSection" style="display:none;">
+      <div class="cfs-title" id="dynamicFieldsTitle">📋 Details</div>
+      <div id="dynamicFieldsContainer"></div>
+    </div>
+    <div class="form-row">
+      <label>📦 Packages (Name + Price) *</label>
+      <div class="pkg-builder" id="pkgBuilder"></div>
+      <button class="btn btn-ghost btn-icon" onclick="addPkgRow()" type="button" style="margin-top:6px;">➕ Add Package</button>
+    </div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="shop_status" checked style="width:auto;" />
+        <span>Active</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('shopModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShopItem()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- META PRODUCT MODAL -->
+<div class="modal" id="metaModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="metaModalTitle">➕ Add Meta Product</div>
+      <button class="modal-close" onclick="closeModal('metaModal')">✕</button>
+    </div>
+    <input type="hidden" id="meta_id" />
+    <div class="form-row">
+      <label>Product Name *</label>
+      <input type="text" id="meta_name" class="form-input" placeholder="Meta Account (Facebook) - USA" />
+    </div>
+    <div class="form-row">
+      <label>Logo *</label>
+      <div class="file-upload-wrap" id="meta_logo_wrap" onclick="document.getElementById('meta_logo_file').click()">
+        <div class="file-upload-icon">🖼️</div>
+        <div class="file-upload-info">
+          <div class="file-upload-title">Tap to Upload Logo</div>
+          <div class="file-upload-sub">Max 15 MB (Auto Compress)</div>
+        </div>
+      </div>
+      <input type="file" id="meta_logo_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'meta_logo')" />
+      <div class="file-preview" id="meta_logo_preview">
+        <img id="meta_logo_preview_img" />
+        <button class="file-preview-remove" onclick="removeImagePreview('meta_logo')" type="button">✕</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Category (Meta Type) *</label>
+      <select id="meta_category" class="form-select">
+        <option value="">-- Select Meta Category --</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Google Sheet URL <span style="color:var(--muted);font-weight:500;">(Public CSV Link)</span></label>
+      <input type="url" id="meta_sheetUrl" class="form-input" placeholder="https://docs.google.com/spreadsheets/d/xxxxx/export?format=csv" />
+      <div class="cfs-hint">💡 Google Sheet → File → Share → Publish to web → CSV। Column: <b>username, password</b></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row"><label>Price Per Account (৳) *</label>
+        <input type="number" step="0.01" id="meta_price" class="form-input" value="0.50" />
+      </div>
+      <div class="form-row"><label>Status</label>
+        <select id="meta_status" class="form-select">
+          <option value="active">🟢 Active</option>
+          <option value="hidden">🔴 Hidden</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Description</label>
+      <textarea id="meta_description" class="form-textarea" placeholder="Meta account details, country, etc."></textarea>
+    </div>
+    <div class="cat-fields-section">
+      <div class="cfs-title">📋 Manual Account List (ঐচ্ছিক)</div>
+      <div class="cfs-hint" style="margin-bottom:10px;">Google Sheet না থাকলে নিচে ম্যানুয়ালি ইউজারনেম/পাসওয়ার্ড যোগ করুন। প্রতি লাইনে একটি: <code>username,password</code></div>
+      <textarea id="meta_manualAccounts" class="form-textarea" style="min-height:120px;font-family:monospace;font-size:12px;" placeholder="user1@mail.com,pass123
+user2@mail.com,pass456
+user3@mail.com,pass789"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('metaModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMetaProduct()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- META ACCOUNTS VIEW MODAL -->
+<div class="modal" id="metaAccountsModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="metaAccountsTitle">🎭 Account List</div>
+      <button class="modal-close" onclick="closeModal('metaAccountsModal')">✕</button>
+    </div>
+    <div class="filters">
+      <button class="filter-chip active" onclick="filterMetaAccounts('all')" data-macc="all">All</button>
+      <button class="filter-chip" onclick="filterMetaAccounts('available')" data-macc="available">🟢 Available</button>
+      <button class="filter-chip" onclick="filterMetaAccounts('sold')" data-macc="sold">🔴 Sold</button>
+    </div>
+    <div id="metaAccountsList"></div>
+  </div>
+</div>
+
+<!-- APP MODAL -->
+<div class="modal" id="appModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="appModalTitle">➕ Add Coin App</div>
+      <button class="modal-close" onclick="closeModal('appModal')">✕</button>
+    </div>
+    <input type="hidden" id="app_id" />
+    <div class="form-row"><label>App Name *</label><input type="text" id="app_name" class="form-input" /></div>
+    <div class="form-row">
+      <label>Logo *</label>
+      <div class="file-upload-wrap" id="app_logo_wrap" onclick="document.getElementById('app_logo_file').click()">
+        <div class="file-upload-icon">🖼️</div>
+        <div class="file-upload-info">
+          <div class="file-upload-title">Tap to Upload Logo</div>
+          <div class="file-upload-sub">Max 15 MB</div>
+        </div>
+      </div>
+      <input type="file" id="app_logo_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'app_logo')" />
+      <div class="file-preview" id="app_logo_preview">
+        <img id="app_logo_preview_img" />
+        <button class="file-preview-remove" onclick="removeImagePreview('app_logo')" type="button">✕</button>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row"><label>Rate Per (Coins) *</label><input type="number" id="app_ratePer" class="form-input" value="1000" /></div>
+      <div class="form-row"><label>Color</label>
+        <select id="app_color" class="form-select">
+          <option value="blue">Blue</option>
+          <option value="green">Green</option>
+          <option value="orange">Orange</option>
+          <option value="purple">Purple</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row"><label>Receiving Account</label><input type="text" id="app_receivingAccount" class="form-input" /></div>
+
+    <!-- RANGE BUILDER -->
+    <div class="cat-fields-section" style="background:linear-gradient(135deg,#eff6ff,#f7faff);border-color:#bfdbfe;">
+      <div class="cfs-title" style="color:#1e40af;">📊 Price Ranges (৪টি Range) *</div>
+      <div class="cfs-hint" style="color:#1e40af;margin-bottom:12px;">
+        ?? ইউজার Coin Sell করার সময় এই Range গুলো থেকে সিলেক্ট করবে। Min – Max Coins এর মধ্যে Rate apply হবে।
+      </div>
+      <div id="appRangesBuilder"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn btn-purple btn-icon" onclick="addAppRangeRow()" type="button">➕ Add Range</button>
+        <button class="btn btn-ghost btn-icon" onclick="fillDefaultAppRanges()" type="button">⚡ Default ৪টি</button>
+      </div>
+    </div>
+
+    <div class="form-row"><label>Description</label><textarea id="app_description" class="form-textarea"></textarea></div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="app_status" checked style="width:auto;" />
+        <span>Active</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('appModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApp()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal" id="payModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="payModalTitle">➕ Add Payment Method</div>
+      <button class="modal-close" onclick="closeModal('payModal')">✕</button>
+    </div>
+    <input type="hidden" id="pay_id" />
+    <div class="form-row"><label>Method Name *</label><input type="text" id="pay_name" class="form-input" /></div>
+    <div class="form-row">
+      <label>Logo *</label>
+      <div class="file-upload-wrap" id="pay_logo_wrap" onclick="document.getElementById('pay_logo_file').click()">
+        <div class="file-upload-icon">🖼️</div>
+        <div class="file-upload-info">
+          <div class="file-upload-title">Tap to Upload Logo</div>
+          <div class="file-upload-sub">Max 15 MB</div>
+        </div>
+      </div>
+      <input type="file" id="pay_logo_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'pay_logo')" />
+      <div class="file-preview" id="pay_logo_preview">
+        <img id="pay_logo_preview_img" />
+        <button class="file-preview-remove" onclick="removeImagePreview('pay_logo')" type="button">✕</button>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row"><label>Admin Number *</label><input type="text" id="pay_adminNumber" class="form-input" /></div>
+      <div class="form-row"><label>Display Number</label><input type="text" id="pay_number" class="form-input" /></div>
+    </div>
+    <div class="form-row"><label>Instructions</label><textarea id="pay_instructions" class="form-textarea"></textarea></div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="pay_status" checked style="width:auto;" />
+        <span>Active</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('payModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePay()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TUTORIAL MODAL -->
+<div class="modal" id="tutModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="tutModalTitle">➕ Add Tutorial</div>
+      <button class="modal-close" onclick="closeModal('tutModal')">✕</button>
+    </div>
+    <input type="hidden" id="tut_id" />
+    <div class="form-row"><label>Title *</label><input type="text" id="tut_title" class="form-input" /></div>
+    <div class="form-row">
+      <label>Thumbnail *</label>
+      <div class="file-upload-wrap" id="tut_thumbnail_wrap" onclick="document.getElementById('tut_thumbnail_file').click()">
+        <div class="file-upload-icon">🎬</div>
+        <div class="file-upload-info">
+          <div class="file-upload-title">Tap to Upload Thumbnail</div>
+          <div class="file-upload-sub">Max 15 MB</div>
+        </div>
+      </div>
+      <input type="file" id="tut_thumbnail_file" accept="image/*" style="display:none;" onchange="handleImageUpload(event, 'tut_thumbnail')" />
+      <div class="file-preview" id="tut_thumbnail_preview">
+        <img id="tut_thumbnail_preview_img" />
+        <button class="file-preview-remove" onclick="removeImagePreview('tut_thumbnail')" type="button">✕</button>
+      </div>
+    </div>
+    <div class="form-row"><label>Video URL *</label><input type="url" id="tut_videoUrl" class="form-input" /></div>
+    <div class="form-row"><label>Description</label><textarea id="tut_description" class="form-textarea"></textarea></div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="tut_status" checked style="width:auto;" />
+        <span>Active</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('tutModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTut()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal" id="orderModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title">📦 Order Details</div>
+      <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    </div>
+    <div id="orderDetailContent"></div>
+    <div class="modal-actions" style="flex-wrap:wrap;" id="orderActions"></div>
+  </div>
+</div>
+
+<!-- ADD MONEY MODAL -->
+<div class="modal" id="amModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title">➕ Add Money Details</div>
+      <button class="modal-close" onclick="closeModal('amModal')">✕</button>
+    </div>
+    <div id="amDetailContent"></div>
+    <div class="modal-actions" style="flex-wrap:wrap;" id="amActions"></div>
+  </div>
+</div>
+
+<!-- WITHDRAW MODAL -->
+<div class="modal" id="wdModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title">💸 Withdraw Details</div>
+      <button class="modal-close" onclick="closeModal('wdModal')">✕</button>
+    </div>
+    <div id="wdDetailContent"></div>
+    <div class="modal-actions" style="flex-wrap:wrap;" id="wdActions"></div>
+  </div>
+</div>
+
+<!-- BALANCE MODAL -->
+<div class="modal" id="balanceModal">
+  <div class="modal-content" style="max-width:420px;">
+    <div class="modal-head">
+      <div class="modal-title">💰 Balance Adjust</div>
+      <button class="modal-close" onclick="closeModal('balanceModal')">✕</button>
+    </div>
+    <input type="hidden" id="bal_userId" />
+    <div class="form-row"><label>User</label><input type="text" id="bal_userName" class="form-input" readonly /></div>
+    <div class="form-row"><label>Current Balance</label><input type="text" id="bal_current" class="form-input" readonly /></div>
+    <div class="form-grid-2">
+      <div class="form-row">
+        <label>Action</label>
+        <select id="bal_action" class="form-select">
+          <option value="add">➕ Add</option>
+          <option value="subtract">➖ Subtract</option>
+          <option value="set">✏️ Set</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Amount (৳)</label><input type="number" id="bal_amount" class="form-input" /></div>
+    </div>
+    <div class="form-row"><label>Note</label><input type="text" id="bal_note" class="form-input" /></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('balanceModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitBalanceAdjust()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal" id="confirmModal">
+  <div class="modal-content" style="max-width:400px;">
+    <div class="modal-head">
+      <div class="modal-title">⚠️ Confirm</div>
+    </div>
+    <div id="confirmText" style="font-size:13.5px;color:var(--muted);margin-bottom:8px;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn">Yes</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* =========================================================
+   FIREBASE
+========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDKO6a-5p7qTmvf_408L9Lby5pHR1iYtAY",
+  authDomain: "usp-topup-1056c.firebaseapp.com",
+  databaseURL: "https://usp-topup-1056c-default-rtdb.firebaseio.com",
+  projectId: "usp-topup-1056c",
+  storageBucket: "usp-topup-1056c.firebasestorage.app",
+  messagingSenderId: "932503941894",
+  appId: "1:932503941894:web:92893512425d3d411de487"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const ADMIN_PASSWORD = "gbsbd";
+
+/* =========================================================
+   STATE
+========================================================= */
+let ORDERS = [];
+let APPS = [];
+let PAYMENTS = [];
+let TUTORIALS = [];
+let REVIEWS = [];
+let USERS = [];
+let SHOP_ITEMS = [];
+let CATEGORIES = [];
+let ADD_MONEY_REQS = [];
+let WITHDRAW_REQS = [];
+let ALL_TRANSACTIONS = [];
+let SETTINGS = {};
+let ORDER_FILTER = 'all';
+let REVIEW_FILTER = 'pending';
+let SHOP_CAT_FILTER = 'all';
+let AM_FILTER = 'pending';
+let WD_FILTER = 'pending';
+let TRX_FILTER = 'all';
+let PKG_ROWS = [];
+let META_PRODUCTS = [];
+let META_PURCHASES = [];
+let META_PURCHASE_FILTER = 'all';
+let META_ACCOUNT_FILTER = 'all';
+let CURRENT_META_PRODUCT_ID = '';
+let CURRENT_META_ACCOUNTS = [];
+
+let IMG_STORE = {
+  s_logo: '', s_splashImage: '', app_logo: '',
+  pay_logo: '', shop_logo: '', tut_thumbnail: '',
+  meta_logo: ''
+};
+
+let APP_RANGES = [];
+
+const DEFAULT_RANGE_TEMPLATE = [
+  { min: 10000,   max: 100000,  rate: 10,   label: '10K - 100K' },
+  { min: 100000,  max: 500000,  rate: 10.2, label: '100K - 500K' },
+  { min: 500000,  max: 1000000, rate: 10.5, label: '500K - 1M' },
+  { min: 1000000, max: 5000000, rate: 11,   label: '1M - 5M' }
+];
+
+/* =========================================================
+   SEED
+========================================================= */
+const DEFAULT_SEED_PAYMENTS = {
+  bkash: { name:'বিকাশ', logo:'https://i.ibb.co/M5jb77B2/file-63.jpg', number:'01XXXXXXXXX', adminNumber:'01XXXXXXXXX', status:true, createdAt:Date.now() },
+  nagad: { name:'নগদ', logo:'https://i.ibb.co/99VKJ35z/file-67.jpg', number:'01XXXXXXXXX', adminNumber:'01XXXXXXXXX', status:true, createdAt:Date.now() },
+  rocket: { name:'রকেট', logo:'https://i.ibb.co/jZB1xVJz/file-65.jpg', number:'01XXXXXXXXX', adminNumber:'01XXXXXXXXX', status:true, createdAt:Date.now() }
+};
+
+const ICON_MAP = {
+  'proxy':'🌐', 'vpn':'🔒', 'meta':'🎭','facebook':'🎭','fb':'🎭',
+  'free fire':'🔥','freefire':'🔥','ff':'🔥',
+  'pubg':'🎮','uc':'🎮','mobile legends':'⚔️','mlbb':'⚔️','genshin':'✨',
+  'netflix':'📺','spotify':'🎵','youtube':'▶️','diamond':'💎',
+  'top up':'💰','topup':'💰','imo':'💬','whatsapp':'💬','telegram':'✈️',
+  'prime':'🎬','movie':'🎬','game':'🎮'
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function $(id){ return document.getElementById(id); }
+function num(v){ return Number(String(v).replace(/[^0-9.]/g,'')) || 0; }
+function fmt(n){ return Number(n||0).toLocaleString('en-IN'); }
+function fmtD(n){ const v=Number(n||0); return Number.isInteger(v)?v.toLocaleString('en-IN'):v.toFixed(2); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function safeUrl(u){
+  if(!u) return '';
+  if(u.startsWith('data:image/')) return u;
+  try{ const x=new URL(u); return (x.protocol==='http:'||x.protocol==='https:') ? u : ''; }catch(e){ return ''; }
+}
+function slugify(s){ return String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+
+function toast(msg, type='info'){
+  const t = $('toast');
+  const ico = type==='ok'?'✅':type==='err'?'❌':'ℹ️';
+  t.className = 'show ' + type;
+  t.innerHTML = '<span>'+ico+'</span><span>'+esc(msg)+'</span>';
+  clearTimeout(window.__tt);
+  window.__tt = setTimeout(()=>{ t.className = type; }, 3000);
+}
+function openModal(id){ $(id).classList.add('show'); }
+function closeModal(id){ $(id).classList.remove('show'); }
+function confirmAction(text, cb){
+  $('confirmText').textContent = text;
+  const btn = $('confirmBtn');
+  btn.onclick = ()=>{ closeModal('confirmModal'); cb(); };
+  openModal('confirmModal');
+}
+function statusClass(s){
+  const m = { pending:'badge-pending', processing:'badge-processing', completed:'badge-completed', rejected:'badge-rejected', cancelled:'badge-cancelled' };
+  return m[String(s||'pending').toLowerCase()] || 'badge-pending';
+}
+function statusLabel(s){
+  const m = { pending:'🟡 Pending', processing:'🔵 Processing', completed:'🟢 Completed', rejected:'🔴 Rejected', cancelled:'⚫ Cancelled' };
+  return m[String(s||'pending').toLowerCase()] || '🟡 Pending';
+}
+
+/* =========================================================
+   IMAGE UPLOAD + AUTO COMPRESS
+========================================================= */
+function handleImageUpload(event, key){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')){ toast('শুধু Image','err'); return; }
+  if(file.size > 15 * 1024 * 1024){ toast('Max 15 MB','err'); return; }
+
+  toast('ছবি Compress হচ্ছে...','info');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const img = new Image();
+    img.onload = function(){
+      try{
+        const MAX_DIM = 1600;
+        let w = img.width, h = img.height;
+        if(w > MAX_DIM || h > MAX_DIM){
+          if(w > h){ h = Math.round((h / w) * MAX_DIM); w = MAX_DIM; }
+          else{ w = Math.round((w / h) * MAX_DIM); h = MAX_DIM; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        let q = 0.85;
+        let dataUrl = canvas.toDataURL('image/jpeg', q);
+        while(dataUrl.length > 1.5*1024*1024 && q > 0.25){
+          q -= 0.1;
+          dataUrl = canvas.toDataURL('image/jpeg', q);
+        }
+        IMG_STORE[key] = dataUrl;
+        const preview = $(key + '_preview');
+        const previewImg = $(key + '_preview_img');
+        const wrap = $(key + '_wrap');
+        if(preview && previewImg){ previewImg.src = dataUrl; preview.classList.add('show'); }
+        if(wrap) wrap.classList.add('has-image');
+        const finalKB = Math.round(dataUrl.length / 1024);
+        toast('ছবি Upload হয়েছে ✅ (~' + finalKB + ' KB)', 'ok');
+      }catch(err){ toast('Process হয়নি','err'); }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removeImagePreview(key){
+  IMG_STORE[key] = '';
+  const preview = $(key + '_preview');
+  const wrap = $(key + '_wrap');
+  const input = $(key + '_file');
+  if(preview) preview.classList.remove('show');
+  if(wrap) wrap.classList.remove('has-image');
+  if(input) input.value = '';
+  toast('ছবি সরানো হয়েছে','info');
+}
+function setImagePreview(key, src){
+  if(!src){
+    IMG_STORE[key] = '';
+    const preview = $(key + '_preview');
+    const wrap = $(key + '_wrap');
+    if(preview) preview.classList.remove('show');
+    if(wrap) wrap.classList.remove('has-image');
+    return;
+  }
+  IMG_STORE[key] = src;
+  const preview = $(key + '_preview');
+  const img = $(key + '_preview_img');
+  const wrap = $(key + '_wrap');
+  if(preview && img){ img.src = src; preview.classList.add('show'); }
+  if(wrap) wrap.classList.add('has-image');
+}
+
+/* =========================================================
+   LOGIN
+========================================================= */
+function doLogin(){
+  const v = $('loginPass').value.trim();
+  if(v === ADMIN_PASSWORD){
+    try{ sessionStorage.setItem('gbs_admin_ok', '1'); }catch(e){}
+    $('loginScreen').style.display = 'none';
+    $('adminApp').classList.add('active');
+    bootAdmin();
+  } else {
+    $('loginError').style.display = 'block';
+    $('loginPass').value = '';
+  }
+}
+function doLogout(){
+  try{ sessionStorage.removeItem('gbs_admin_ok'); }catch(e){}
+  location.reload();
+}
+$('loginPass').addEventListener('keypress', e=>{ if(e.key === 'Enter') doLogin(); });
+
+/* =========================================================
+   TABS
+========================================================= */
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    const tab = b.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const c = $('tab-' + tab);
+    if(c) c.classList.add('active');
+    window.scrollTo({ top:0, behavior:'smooth' });
+    if(tab === 'dashboard') loadDashboard();
+    if(tab === 'orders') loadOrders();
+    if(tab === 'categories') loadCategories();
+    if(tab === 'shop') loadShopItems();
+    if(tab === 'meta') loadMetaProducts();
+    if(tab === 'addmoney') loadAddMoney();
+    if(tab === 'withdraw') loadWithdraws();
+    if(tab === 'apps') loadApps();
+    if(tab === 'payments') loadPayments();
+    if(tab === 'tutorials') loadTutorials();
+    if(tab === 'reviews') loadReviews();
+    if(tab === 'users') loadUsers();
+    if(tab === 'transactions') loadAllTransactions();
+    if(tab === 'settings') loadSettingsForm();
+  });
+});
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+async function loadDashboard(){
+  try{
+    const [uSnap, oSnap, rSnap, sSnap, cSnap, mSnap] = await Promise.all([
+      db.ref('users').once('value'),
+      db.ref('orders').once('value'),
+      db.ref('transactions').once('value'),
+      db.ref('shopItems').once('value'),
+      db.ref('categories').once('value'),
+      db.ref('metaProducts').once('value')
+    ]);
+    const users = uSnap.val() || {};
+    const orders = oSnap.val() || {};
+    const trx = rSnap.val() || {};
+    const shop = sSnap.val() || {};
+    const cats = cSnap.val() || {};
+    const meta = mSnap.val() || {};
+
+    const oList = Object.keys(orders).map(k=>orders[k]);
+    const tList = Object.keys(trx).map(k=>trx[k]);
+    const sList = Object.keys(shop).map(k=>shop[k]);
+
+    const pending = oList.filter(o=>o.status==='pending').length;
+    const completed = oList.filter(o=>o.status==='completed').length;
+    const totalCoins = oList.filter(o=>o.status==='completed').reduce((s,o)=>s+num(o.coinAmount),0);
+    const totalPaid = oList.filter(o=>o.status==='completed').reduce((s,o)=>s+num(o.receiveAmount),0);
+    const totalAddMoney = tList.filter(t=>t.type==='add' && t.status==='completed').reduce((s,t)=>s+num(t.amount),0);
+    const totalWithdraw = tList.filter(t=>t.type==='withdraw' && t.status==='completed').reduce((s,t)=>s+num(t.amount),0);
+    const totalShop = tList.filter(t=>t.type==='shop').reduce((s,t)=>s+num(t.amount),0);
+    const totalMeta = tList.filter(t=>t.type==='meta').reduce((s,t)=>s+num(t.amount),0);
+    const shopAvailable = sList.filter(x=>!x.sold && x.status!==false).length;
+
+    const boxes = [
+      { icon:'👥', val: Object.keys(users).length, lbl:'Users' },
+      { icon:'📦', val: oList.length, lbl:'Orders' },
+      { icon:'⏳', val: pending, lbl:'Pending' },
+      { icon:'✅', val: completed, lbl:'Completed', color:'green' },
+      { icon:'🪙', val: fmt(totalCoins), lbl:'Coins', color:'purple' },
+      { icon:'💵', val: '৳'+fmtD(totalPaid), lbl:'Paid', color:'green' },
+      { icon:'➕', val: '৳'+fmtD(totalAddMoney), lbl:'Add Money', color:'green' },
+      { icon:'💸', val: '৳'+fmtD(totalWithdraw), lbl:'Withdraw', color:'red' },
+      { icon:'🛒', val: '৳'+fmtD(totalShop), lbl:'Shop Sales', color:'purple' },
+      { icon:'🎭', val: '৳'+fmtD(totalMeta), lbl:'Meta Sales', color:'purple' },
+      { icon:'📊', val: shopAvailable, lbl:'Products', color:'orange' },
+      { icon:'🗂️', val: Object.keys(cats).length, lbl:'Categories', color:'orange' },
+      { icon:'⏳', val: tList.filter(t=>t.status === 'pending').length, lbl:'Pending Trx' }
+    ];
+    $('statsGrid').innerHTML = boxes.map(b=>`
+      <div class="stat-box" ${b.color?`data-color="${b.color}"`:''}>
+        <div class="stat-icon">${b.icon}</div>
+        <div class="stat-val">${b.val}</div>
+        <div class="stat-lbl">${b.lbl}</div>
+      </div>
+    `).join('');
+
+    const recent = oList.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
+    const recentBox = $('recentOrders');
+    if(!recent.length){
+      recentBox.innerHTML = '<div class="empty"><div class="eico">📦</div><div class="etxt">Order নেই।</div></div>';
+    } else {
+      recentBox.innerHTML = recent.map(o=>orderItemHTML(o)).join('');
+      recentBox.querySelectorAll('[data-oid]').forEach(el=>{
+        el.onclick = ()=>{ closeModal('orderModal'); showOrderDetail(el.getAttribute('data-oid')); };
+      });
+    }
+  }catch(e){ console.error(e); }
+}
+
+/* =========================================================
+   ORDERS
+========================================================= */
+async function loadOrders(){
+  const box = $('ordersList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('orders').once('value');
+    const data = snap.val() || {};
+    ORDERS = Object.keys(data).map(k=>({ id:k, ...data[k] }))
+      .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderOrders();
+  }catch(e){}
+}
+function renderOrders(){
+  const search = ($('orderSearch').value || '').toLowerCase().trim();
+  const box = $('ordersList');
+  let list = ORDERS.slice();
+  if(ORDER_FILTER !== 'all') list = list.filter(o=>String(o.status||'').toLowerCase() === ORDER_FILTER);
+  if(search) list = list.filter(o=>{
+    return (o.orderId||'').toLowerCase().includes(search)
+      || (o.telegramId||'').toLowerCase().includes(search)
+      || (o.username||'').toLowerCase().includes(search)
+      || (o.appName||'').toLowerCase().includes(search);
+  });
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">📦</div><div class="etxt">Order নেই।</div></div>'; return; }
+  box.innerHTML = list.map(o=>orderItemHTML(o)).join('');
+  box.querySelectorAll('[data-oid]').forEach(el=>{
+    el.onclick = ()=> showOrderDetail(el.getAttribute('data-oid'));
+  });
+}
+function orderItemHTML(o){
+  const date = o.createdAt ? new Date(o.createdAt) : null;
+  const dt = date ? date.toLocaleDateString('en-GB') + ' ' + date.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) : '';
+  const credited = o.balanceCredited === true;
+  return `<div class="order-item" data-oid="${esc(o.id)}">
+    <div class="order-item-top">
+      <div>
+        <div class="order-item-id">#${esc(o.orderId||o.id)}</div>
+        <div class="order-item-sub">${esc(o.firstName||'')} @${esc(o.username||'-')} • ${esc(dt)}</div>
+      </div>
+      <span class="badge ${statusClass(o.status)}">${statusLabel(o.status)}</span>
+    </div>
+    <div class="order-item-grid">
+      <div><div class="oi-label">App</div><div class="oi-value">${esc(o.appName||'-')}</div></div>
+      <div><div class="oi-label">Coins</div><div class="oi-value">${fmt(o.coinAmount)}</div></div>
+      <div><div class="oi-label">Payout</div><div class="oi-value" style="color:#22c55e;">৳${fmtD(o.receiveAmount)}</div></div>
+    </div>
+    ${credited ? '<div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);font-size:11px;color:#15803d;font-weight:800;">✅ Balance-এ ৳'+fmtD(o.creditedAmount||0)+' যোগ হয়েছে</div>' : ''}
+  </div>`;
+}
+$('orderSearch').addEventListener('input', renderOrders);
+document.querySelectorAll('#orderFilters .filter-chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#orderFilters .filter-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    ORDER_FILTER = c.getAttribute('data-status');
+    renderOrders();
+  });
+});
+function showOrderDetail(id){
+  const o = ORDERS.find(x=>x.id===id);
+  if(!o) return;
+  const date = o.createdAt ? new Date(o.createdAt).toLocaleString('en-GB') : '';
+  const proof = o.proofUrl ? `<img class="detail-image" src="${esc(o.proofUrl)}" />` : '<div style="color:var(--muted);font-size:12px;padding:10px;">No proof</div>';
+  const rangeHTML = o.rangeLabel
+    ? `<div class="detail-row"><span class="dr-label">📊 Range</span><span class="dr-value">${esc(o.rangeLabel)}</span></div>`
+    : '';
+
+  const creditHTML = (o.balanceCredited === true)
+    ? `<div class="credit-alert">
+        <div class="ca-ico">✓</div>
+        <div class="ca-content">
+          <div class="ca-title">Balance Credited</div>
+          <div class="ca-sub">৳${fmtD(o.creditedAmount||o.receiveAmount)} ইউজারের Main Balance-এ যোগ হয়েছে<br>Balance After: ৳${fmtD(o.balanceAfter||0)}</div>
+        </div>
+      </div>`
+    : '';
+
+  $('orderDetailContent').innerHTML = `
+    <div class="detail-row"><span class="dr-label">Order ID</span><span class="dr-value">#${esc(o.orderId||o.id)}</span></div>
+    <div class="detail-row"><span class="dr-label">Status</span><span class="dr-value"><span class="badge ${statusClass(o.status)}">${statusLabel(o.status)}</span></span></div>
+    <div class="detail-row"><span class="dr-label">Name</span><span class="dr-value">${esc((o.firstName||'')+' '+(o.lastName||''))}</span></div>
+    <div class="detail-row"><span class="dr-label">Username</span><span class="dr-value">@${esc(o.username||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Telegram ID</span><span class="dr-value">${esc(o.telegramId||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">App</span><span class="dr-value">${esc(o.appName||'-')}</span></div>
+    ${rangeHTML}
+    <div class="detail-row"><span class="dr-label">Coins</span><span class="dr-value">${fmt(o.coinAmount)}</span></div>
+    <div class="detail-row"><span class="dr-label">Rate</span><span class="dr-value">৳${fmtD(o.rate)} / ${fmt(o.ratePer||1000)}</span></div>
+    <div class="detail-row"><span class="dr-label">Gross</span><span class="dr-value">৳${fmtD(o.grossAmount||0)}</span></div>
+    <div class="detail-row"><span class="dr-label">Fee</span><span class="dr-value">-৳${fmtD(o.sendFee||0)}</span></div>
+    <div class="detail-row"><span class="dr-label">Receive</span><span class="dr-value" style="color:#22c55e;">৳${fmtD(o.receiveAmount)}</span></div>
+    <div class="detail-row"><span class="dr-label">Sender Acc</span><span class="dr-value">${esc(o.senderAccount||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Date</span><span class="dr-value">${esc(date)}</span></div>
+    ${creditHTML}
+    <div style="font-size:12px;font-weight:700;margin-top:12px;margin-bottom:6px;">📷 Proof</div>
+    ${proof}`;
+
+  const s = String(o.status||'pending').toLowerCase();
+  let btns = '';
+  if(s !== 'processing') btns += `<button class="btn btn-primary" onclick="updateOrderStatus('${o.id}','processing')">🔵 Processing</button>`;
+  if(s !== 'completed') btns += `<button class="btn btn-success" onclick="updateOrderStatus('${o.id}','completed')">✅ Complete + Balance Add</button>`;
+  if(s !== 'rejected') btns += `<button class="btn btn-danger" onclick="updateOrderStatus('${o.id}','rejected')">🔴 Reject</button>`;
+  btns += `<button class="btn btn-ghost" onclick="deleteOrder('${o.id}')">🗑 Delete</button>`;
+  $('orderActions').innerHTML = btns;
+  openModal('orderModal');
+}
+
+/* =========================================================
+   UPDATE ORDER STATUS + AUTO BALANCE CREDIT
+========================================================= */
+async function updateOrderStatus(id, status){
+  try{
+    const orderSnap = await db.ref('orders/' + id).once('value');
+    const order = orderSnap.val();
+    if(!order){ toast('Order পাওয়া যায়নি','err'); return; }
+
+    const newStatus = String(status || '').toLowerCase();
+    const alreadyCredited = order.balanceCredited === true;
+
+    /* Update status */
+    await db.ref('orders/' + id).update({
+      status: newStatus,
+      updatedAt: Date.now()
+    });
+
+    /* Auto-credit balance when status becomes completed */
+    if(newStatus === 'completed' && !alreadyCredited){
+      const telegramId = String(order.telegramId || '');
+      const receiveAmt = num(order.receiveAmount || 0);
+
+      if(telegramId && receiveAmt > 0){
+        /* Get current balance */
+        const balSnap = await db.ref('users/' + telegramId + '/balance').once('value');
+        const currentBalance = num(balSnap.val()) || 0;
+        const newBalance = currentBalance + receiveAmt;
+
+        /* Update user balance */
+        await db.ref('users/' + telegramId + '/balance').set(newBalance);
+
+        /* Mark order as credited */
+        await db.ref('orders/' + id).update({
+          balanceCredited: true,
+          creditedAt: Date.now(),
+          creditedAmount: receiveAmt,
+          balanceAfter: newBalance
+        });
+
+        /* Create transaction record */
+        const trxId = 'SELL-' + Date.now().toString().slice(-8);
+        await db.ref('transactions/' + trxId).set({
+          trxId,
+          telegramId,
+          username: order.username || '',
+          firstName: order.firstName || '',
+          photoUrl: order.photoUrl || '',
+          type: 'add',
+          label: 'Coin Sell • ' + (order.appName || 'App'),
+          amount: receiveAmt,
+          orderId: order.orderId || id,
+          coinAmount: num(order.coinAmount || 0),
+          rangeLabel: order.rangeLabel || '',
+          status: 'completed',
+          createdAt: Date.now()
+        });
+
+        toast('✅ Complete! ৳'+fmtD(receiveAmt)+' Balance যোগ হয়েছে (নতুন: ৳'+fmtD(newBalance)+')', 'ok');
+      } else {
+        toast('Order Completed (User/Amount নেই)','info');
+      }
+    } else if(newStatus === 'completed' && alreadyCredited){
+      toast('Order Completed (আগেই Credit হয়েছে)','info');
+    } else if(newStatus === 'rejected' && alreadyCredited){
+      /* If rejected after credited, refund (subtract) from user balance */
+      const telegramId = String(order.telegramId || '');
+      const amt = num(order.creditedAmount || order.receiveAmount || 0);
+      if(telegramId && amt > 0){
+        const balSnap = await db.ref('users/' + telegramId + '/balance').once('value');
+        const curr = num(balSnap.val()) || 0;
+        const newBal = Math.max(0, curr - amt);
+        await db.ref('users/' + telegramId + '/balance').set(newBal);
+        await db.ref('orders/' + id).update({
+          balanceCredited: false,
+          refundedAt: Date.now(),
+          refundedAmount: amt
+        });
+        toast('⚠️ Order Rejected + ৳'+fmtD(amt)+' Balance থেকে কেটে নেওয়া হয়েছে', 'err');
+      } else {
+        toast('Order Rejected','ok');
+      }
+    } else {
+      toast('Status Update হয়েছে','ok');
+    }
+
+    closeModal('orderModal');
+    loadOrders();
+    loadDashboard();
+  }catch(e){
+    console.error(e);
+    toast('Update হয়নি','err');
+  }
+}
+
+function deleteOrder(id){
+  confirmAction('Order মুছে ফেলতে চান? Balance থাকলে তা কাটবে না।', async ()=>{
+    try{ await db.ref('orders/' + id).remove(); closeModal('orderModal'); loadOrders(); toast('Delete','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
+async function loadCategories(){
+  const box = $('categoryList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('categories').once('value');
+    const data = snap.val() || {};
+    const prodSnap = await db.ref('shopItems').once('value');
+    const prods = prodSnap.val() || {};
+    CATEGORIES = Object.keys(data).map(k=>({ id:k, ...data[k] }));
+    renderCategories(prods);
+  }catch(e){ box.innerHTML = '<div class="empty"><div class="eico">❌</div><div class="etxt">লোড হয়নি।</div></div>'; }
+}
+function renderCategories(prods){
+  const box = $('categoryList');
+  if(!CATEGORIES.length){
+    box.innerHTML = '<div class="empty" style="grid-column:1/-1;"><div class="eico">🗂️</div><div class="etxt">কোনো Category নেই। Add করুন।</div></div>';
+    return;
+  }
+  box.innerHTML = CATEGORIES.map(c=>{
+    let count = 0;
+    Object.keys(prods || {}).forEach(k=>{
+      if(prods[k].category === c.id) count++;
+    });
+    const typeIcon = c.type === 'proxy' ? '🌐' : c.type === 'vpn' ? '🔒' : c.type === 'meta' ? '🎭' : '📦';
+    return `
+      <div class="category-card" onclick="openCategoryForEdit('${c.id}')">
+        <button class="cc-del" onclick="event.stopPropagation(); deleteCategory('${c.id}')" type="button">✕</button>
+        <div class="cc-ico">${esc(c.icon || '📦')}</div>
+        <div class="cc-name">${esc(c.name)}</div>
+        <div class="cc-count">${count} • ${typeIcon} ${esc(c.type||'package')}</div>
+      </div>
+    `;
+  }).join('');
+}
+function openCategoryForEdit(cid){
+  const c = CATEGORIES.find(x=>x.id===cid);
+  if(!c) return;
+  $('categoryModalTitle').textContent = '✏️ Edit Category';
+  $('cat_id').value = c.id;
+  $('cat_name').value = c.name || '';
+  $('cat_icon').value = c.icon || '';
+  $('cat_type').value = c.type || 'package';
+  openModal('categoryModal');
+}
+function openCategoryModal(){
+  $('categoryModalTitle').textContent = '➕ Add Category';
+  $('cat_id').value = '';
+  $('cat_name').value = '';
+  $('cat_icon').value = '';
+  $('cat_type').value = 'package';
+  openModal('categoryModal');
+}
+function autoDetectIcon(){
+  const name = ($('cat_name').value || '').toLowerCase().trim();
+  if(!name) return;
+  if($('cat_icon').value) return;
+  for(const key of Object.keys(ICON_MAP)){
+    if(name.includes(key)){
+      $('cat_icon').value = ICON_MAP[key];
+      if(key === 'proxy') $('cat_type').value = 'proxy';
+      else if(key === 'vpn') $('cat_type').value = 'vpn';
+      else if(key === 'meta' || key === 'facebook' || key === 'fb') $('cat_type').value = 'meta';
+      break;
+    }
+  }
+}
+async function saveCategory(){
+  const existingId = ($('cat_id').value || '').trim();
+  const name = $('cat_name').value.trim();
+  const icon = $('cat_icon').value.trim() || '📦';
+  const type = $('cat_type').value || 'package';
+  if(!name){ toast('Category Name দিন','err'); return; }
+  const id = existingId || slugify(name) || ('cat_' + Date.now());
+  const payload = { name, icon, type, updatedAt: Date.now() };
+  if(!existingId) payload.createdAt = Date.now();
+  try{
+    if(existingId) await db.ref('categories/' + existingId).update(payload);
+    else await db.ref('categories/' + id).set(payload);
+    toast('Category Save ✅','ok');
+    closeModal('categoryModal');
+    loadCategories();
+  }catch(e){ toast('Save হয়নি','err'); }
+}
+function deleteCategory(cid){
+  const c = CATEGORIES.find(x=>x.id===cid);
+  confirmAction('"'+ (c?.name||'') +'" মুছে ফেলবেন? এর সব Product-ও Delete হবে।', async ()=>{
+    try{
+      const prodSnap = await db.ref('shopItems').once('value');
+      const prods = prodSnap.val() || {};
+      const updates = {};
+      Object.keys(prods).forEach(k=>{ if(prods[k].category === cid) updates['shopItems/' + k] = null; });
+      updates['categories/' + cid] = null;
+      await db.ref().update(updates);
+      toast('Category Delete ✅','ok');
+      loadCategories();
+    }catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   SHOP PRODUCTS
+========================================================= */
+async function loadShopItems(){
+  const box = $('shopList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('shopItems').once('value');
+    const data = snap.val() || {};
+    SHOP_ITEMS = Object.keys(data).map(k=>({ id:k, ...data[k] }))
+      .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    await populateShopFilters();
+    renderShopList();
+  }catch(e){}
+}
+async function populateShopFilters(){
+  const wrap = $('shopFilters');
+  try{
+    const snap = await db.ref('categories').once('value');
+    const cats = snap.val() || {};
+    CATEGORIES = Object.keys(cats).map(k=>({ id:k, ...cats[k] }));
+  }catch(e){}
+  wrap.innerHTML = '<button class="filter-chip active" data-cat="all">All</button>'
+    + CATEGORIES.map(c=>`<button class="filter-chip" data-cat="${esc(c.id)}">${esc(c.icon||'')} ${esc(c.name)}</button>`).join('')
+    + '<button class="filter-chip" data-cat="__sold">✅ Sold</button>';
+  wrap.querySelectorAll('.filter-chip').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      wrap.querySelectorAll('.filter-chip').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      SHOP_CAT_FILTER = b.getAttribute('data-cat');
+      renderShopList();
+    });
+  });
+}
+function renderShopList(){
+  const box = $('shopList');
+  let list = SHOP_ITEMS.slice();
+  if(SHOP_CAT_FILTER === '__sold') list = list.filter(x=>x.sold === true);
+  else if(SHOP_CAT_FILTER !== 'all') list = list.filter(x=>x.category === SHOP_CAT_FILTER && !x.sold);
+
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">🛒</div><div class="etxt">Product নেই।</div></div>'; return; }
+  box.innerHTML = list.map(item=>{
+    const logo = safeUrl(item.logo) || 'https://ui-avatars.com/api/?name='+encodeURIComponent(item.name||'I')+'&background=8b5cf6&color=fff';
+    const isSold = item.sold === true;
+    const active = item.status !== false && !isSold;
+    const cat = CATEGORIES.find(c=>c.id === item.category) || { name: item.category||'—', icon: '📦', type: 'package' };
+    const catLabel = (cat.icon||'📦') + ' ' + (cat.name||'-');
+    const pkgs = Array.isArray(item.packages) ? item.packages : [];
+    const pkgText = pkgs.length ? pkgs.map(p=>`${p.name} = ৳${fmtD(p.price)}`).join(' • ') : 'No packages';
+
+    let detailLine = '';
+    if(cat.type === 'proxy' && item.proxyDetails){
+      detailLine = `🌐 ${esc(item.proxyDetails.host||'-')} : ${esc(item.proxyDetails.port||'-')} • 👤 ${esc(item.proxyDetails.username||'-')}`;
+    } else if(cat.type === 'vpn'){
+      detailLine = `📧 ${esc(item.vpnEmail||'-')}`;
+    } else if(cat.type === 'meta'){
+      detailLine = `🎭 Google Sheet: ${esc((item.sheetUrl||'').slice(0,40))}...`;
+    } else {
+      detailLine = `📦 ${pkgs.length} packages`;
+    }
+
+    return `
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <img src="${esc(logo)}" />
+            <div class="card-title-text">
+              <div class="ct-name">${esc(item.name||'-')} <span class="badge badge-cat">${catLabel}</span></div>
+              <div class="ct-sub">${esc(item.proxyBy||'-')}</div>
+            </div>
+          </div>
+          ${isSold ? '<span class="badge badge-sold">SOLD</span>' : (active ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-stop">Hidden</span>')}
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;">${detailLine}</div>
+        <div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:10px;">📦 ${esc(pkgText)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${!isSold ? `<button class="btn ${active?'btn-warning':'btn-success'} btn-icon" onclick="toggleShopItem('${item.id}', ${active})">${active?'🔴 Hide':'🟢 Show'}</button>` : ''}
+          ${!isSold ? `<button class="btn btn-primary btn-icon" onclick="editShopItem('${item.id}')">✏️ Edit</button>` : ''}
+          <button class="btn btn-danger btn-icon" onclick="deleteShopItem('${item.id}')">🗑 Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function populateShopCategoryDropdown(){
+  const sel = $('shop_category');
+  if(!sel) return;
+  try{
+    const snap = await db.ref('categories').once('value');
+    const cats = snap.val() || {};
+    CATEGORIES = Object.keys(cats).map(k=>({ id:k, ...cats[k] }));
+    sel.innerHTML = '<option value="">-- Select --</option>'
+      + CATEGORIES.filter(c=>c.type !== 'meta').map(c=>`<option value="${esc(c.id)}">${esc(c.icon||'')} ${esc(c.name)} (${esc(c.type||'package')})</option>`).join('');
+  }catch(e){}
+}
+
+function updateProductFields(){
+  const cid = $('shop_category').value;
+  const sec = $('dynamicFieldsSection');
+  const cont = $('dynamicFieldsContainer');
+  const title = $('dynamicFieldsTitle');
+
+  if(!cid){ sec.style.display = 'none'; return; }
+  const cat = CATEGORIES.find(c=>c.id === cid);
+  if(!cat){ sec.style.display = 'none'; return; }
+
+  if(cat.type === 'proxy'){
+    sec.style.display = 'block';
+    title.innerHTML = '🌐 Proxy Details';
+    cont.innerHTML = `
+      <div class="form-row"><label>Host / Server *</label><input type="text" id="dyn_host" class="form-input" placeholder="proxy.example.com" /></div>
+      <div class="form-grid-2">
+        <div class="form-row"><label>Port *</label><input type="text" id="dyn_port" class="form-input" placeholder="8080" /></div>
+        <div class="form-row"><label>Username *</label><input type="text" id="dyn_username" class="form-input" placeholder="user123" /></div>
+      </div>
+      <div class="form-row"><label>Password *</label><input type="text" id="dyn_password" class="form-input" placeholder="pass123" /></div>
+      <div class="cfs-hint">⚠️ User এই Data Proxy কেনার পর পাবে। একবার কেউ কিনলে Auto Sold হয়ে যাবে।</div>
+    `;
+  } else if(cat.type === 'vpn'){
+    sec.style.display = 'block';
+    title.innerHTML = '🔒 VPN Details';
+    cont.innerHTML = `
+      <div class="form-row"><label>VPN Email *</label><input type="text" id="dyn_vpnEmail" class="form-input" placeholder="user@example.com" /></div>
+      <div class="form-row"><label>VPN Password *</label><input type="text" id="dyn_vpnPassword" class="form-input" placeholder="pass123" /></div>
+      <div class="cfs-hint">⚠️ User এই Email ও Password পাবে VPN কেনার পর।</div>
+    `;
+  } else {
+    sec.style.display = 'none';
+    cont.innerHTML = '';
+  }
+}
+function readDynamicFields(){
+  const cid = $('shop_category').value;
+  const cat = CATEGORIES.find(c=>c.id === cid);
+  if(!cat) return {};
+  if(cat.type === 'proxy'){
+    return {
+      proxyDetails: {
+        host: ($('dyn_host')?.value || '').trim(),
+        port: ($('dyn_port')?.value || '').trim(),
+        username: ($('dyn_username')?.value || '').trim(),
+        password: ($('dyn_password')?.value || '').trim()
+      }
+    };
+  } else if(cat.type === 'vpn'){
+    return {
+      vpnEmail: ($('dyn_vpnEmail')?.value || '').trim(),
+      vpnPassword: ($('dyn_vpnPassword')?.value || '').trim()
+    };
+  }
+  return {};
+}
+
+/* PACKAGE BUILDER */
+function addPkgRow(name, price){
+  PKG_ROWS.push({ name: name || '', price: price || '' });
+  renderPkgBuilder();
+}
+function removePkgRow(idx){
+  PKG_ROWS.splice(idx, 1);
+  if(!PKG_ROWS.length) PKG_ROWS.push({ name:'', price:'' });
+  renderPkgBuilder();
+}
+function renderPkgBuilder(){
+  const box = $('pkgBuilder');
+  if(!PKG_ROWS.length) PKG_ROWS.push({ name:'', price:'' });
+  box.innerHTML = PKG_ROWS.map((p, i)=>`
+    <div class="pkg-builder-row">
+      <input type="text" class="form-input" placeholder="Name (1 GB)" value="${esc(p.name)}" oninput="PKG_ROWS[${i}].name=this.value" />
+      <input type="number" class="form-input" placeholder="Price ৳" value="${esc(p.price)}" oninput="PKG_ROWS[${i}].price=this.value" />
+      <button class="btn btn-danger btn-icon" onclick="removePkgRow(${i})" type="button" style="padding:9px 12px;">✕</button>
+    </div>
+  `).join('');
+}
+
+async function openShopModal(){
+  await populateShopCategoryDropdown();
+  $('shopModalTitle').textContent = '➕ Add Product';
+  $('shop_id').value = '';
+  $('shop_category').value = '';
+  $('shop_name').value = '';
+  $('shop_proxyBy').value = '';
+  $('shop_status').checked = true;
+  $('dynamicFieldsSection').style.display = 'none';
+  $('dynamicFieldsContainer').innerHTML = '';
+  IMG_STORE.shop_logo = '';
+  if($('shop_logo_preview')) $('shop_logo_preview').classList.remove('show');
+  if($('shop_logo_wrap')) $('shop_logo_wrap').classList.remove('has-image');
+  PKG_ROWS = [{ name:'', price:'' }];
+  renderPkgBuilder();
+  openModal('shopModal');
+}
+
+async function editShopItem(id){
+  await populateShopCategoryDropdown();
+  const item = SHOP_ITEMS.find(x=>x.id===id);
+  if(!item){ toast('পাওয়া যায়নি','err'); return; }
+  $('shopModalTitle').textContent = '✏️ Edit Product';
+  $('shop_id').value = item.id;
+  $('shop_category').value = item.category || '';
+  $('shop_name').value = item.name || '';
+  $('shop_proxyBy').value = item.proxyBy || '';
+  $('shop_status').checked = item.status !== false;
+  setImagePreview('shop_logo', item.logo || '');
+  updateProductFields();
+  const cat = CATEGORIES.find(c=>c.id === item.category);
+  if(cat){
+    if(cat.type === 'proxy' && item.proxyDetails){
+      if($('dyn_host')) $('dyn_host').value = item.proxyDetails.host || '';
+      if($('dyn_port')) $('dyn_port').value = item.proxyDetails.port || '';
+      if($('dyn_username')) $('dyn_username').value = item.proxyDetails.username || '';
+      if($('dyn_password')) $('dyn_password').value = item.proxyDetails.password || '';
+    } else if(cat.type === 'vpn'){
+      if($('dyn_vpnEmail')) $('dyn_vpnEmail').value = item.vpnEmail || '';
+      if($('dyn_vpnPassword')) $('dyn_vpnPassword').value = item.vpnPassword || '';
+    }
+  }
+  PKG_ROWS = (Array.isArray(item.packages) && item.packages.length)
+    ? item.packages.map(p=>({ name:p.name, price:p.price }))
+    : [{ name:'', price:'' }];
+  renderPkgBuilder();
+  openModal('shopModal');
+}
+
+async function saveShopItem(){
+  const existingId = ($('shop_id').value || '').trim();
+  const id = existingId || ('prod_' + Date.now());
+  const name = $('shop_name').value.trim();
+  const category = $('shop_category').value.trim();
+  if(!name){ toast('Product Name দিন','err'); return; }
+  if(!category){ toast('Category সিলেক্ট করুন','err'); return; }
+
+  const packages = PKG_ROWS
+    .filter(p=>p.name && p.price)
+    .map(p=>({ name: p.name, price: num(p.price) }));
+  if(!packages.length){ toast('কমপক্ষে একটা Package দিন','err'); return; }
+
+  const payload = {
+    category,
+    name,
+    logo: IMG_STORE.shop_logo || '',
+    proxyBy: $('shop_proxyBy').value.trim(),
+    packages,
+    status: $('shop_status').checked,
+    updatedAt: Date.now()
+  };
+
+  const dyn = readDynamicFields();
+  Object.assign(payload, dyn);
+
+  if(!existingId){
+    payload.createdAt = Date.now();
+    payload.sold = false;
+  }
+
+  try{
+    if(existingId) await db.ref('shopItems/' + id).update(payload);
+    else await db.ref('shopItems/' + id).set(payload);
+    toast('Save হয়েছে ✅','ok');
+    closeModal('shopModal');
+    loadShopItems();
+  }catch(e){ console.error(e); toast('Save হয়নি','err'); }
+}
+
+async function toggleShopItem(id, isActive){
+  try{ await db.ref('shopItems/' + id).update({ status: !isActive }); loadShopItems(); }
+  catch(e){ toast('হয়নি','err'); }
+}
+function deleteShopItem(id){
+  confirmAction('Product মুছে ফেলতে চান?', async ()=>{
+    try{ await db.ref('shopItems/' + id).remove(); toast('Delete','ok'); loadShopItems(); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   META ACCOUNT SELL
+========================================================= */
+async function loadMetaProducts(){
+  const box = $('metaProductsList');
+  if(!box) return;
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('metaProducts').once('value');
+    const data = snap.val() || {};
+    META_PRODUCTS = Object.keys(data).map(k=>({ id:k, ...data[k] }))
+      .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+    let totalAccounts = 0, totalSold = 0, totalRevenue = 0;
+    for(const p of META_PRODUCTS){
+      const accounts = await getMetaAccounts(p);
+      totalAccounts += accounts.length;
+      totalSold += accounts.filter(a=>a.status==='sold').length;
+      totalRevenue += accounts.filter(a=>a.status==='sold').length * num(p.price);
+    }
+    $('metaStatsGrid').innerHTML = `
+      <div class="stat-box" data-color="purple"><div class="stat-icon">🎭</div><div class="stat-val">${META_PRODUCTS.length}</div><div class="stat-lbl">Products</div></div>
+      <div class="stat-box" data-color="green"><div class="stat-icon">📦</div><div class="stat-val">${totalAccounts}</div><div class="stat-lbl">Total Accounts</div></div>
+      <div class="stat-box" data-color="red"><div class="stat-icon">🔴</div><div class="stat-val">${totalSold}</div><div class="stat-lbl">Sold</div></div>
+      <div class="stat-box"><div class="stat-icon">💵</div><div class="stat-val">৳${fmtD(totalRevenue)}</div><div class="stat-lbl">Revenue</div></div>
+    `;
+
+    renderMetaProducts();
+    loadMetaPurchases();
+  }catch(e){ console.error(e); box.innerHTML = '<div class="empty"><div class="eico">❌</div><div class="etxt">লোড হয়নি</div></div>'; }
+}
+
+async function getMetaAccounts(product){
+  let accounts = [];
+  if(product.manualAccounts && product.manualAccounts.trim()){
+    accounts = product.manualAccounts.trim().split('\n').filter(l=>l.includes(',')).map(l=>{
+      const [u, ...p] = l.split(',');
+      return { username: u.trim(), password: p.join(',').trim() };
+    });
+  }
+  if(product.sheetUrl){
+    try{
+      const sheetAccounts = await fetchSheetAccounts(product.sheetUrl);
+      accounts = accounts.concat(sheetAccounts);
+    }catch(e){ console.warn('Sheet load failed', e); }
+  }
+  const soldSnap = await db.ref('metaSold/' + product.id).once('value');
+  const soldData = soldSnap.val() || {};
+  const seen = {};
+  accounts = accounts.filter(a=>{
+    const k = String(a.username||'').toLowerCase();
+    if(!k || seen[k]) return false;
+    seen[k] = true;
+    return true;
+  }).map(a=>{
+    const sold = soldData[a.username];
+    return {
+      username: a.username,
+      password: a.password,
+      status: sold ? 'sold' : 'available',
+      soldTo: sold ? sold.telegramId : null,
+      soldToName: sold ? sold.firstName : null,
+      soldAt: sold ? sold.soldAt : null
+    };
+  });
+  return accounts;
+}
+
+async function fetchSheetAccounts(url){
+  if(!url) return [];
+  let csvUrl = url;
+  if(url.includes('docs.google.com/spreadsheets')){
+    if(!url.includes('output=csv') && !url.includes('export?format=csv')){
+      const m = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      if(m){
+        const id = m[1];
+        const gidMatch = url.match(/gid=([0-9]+)/);
+        const gid = gidMatch ? gidMatch[1] : '0';
+        csvUrl = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+      }
+    }
+  }
+  const res = await fetch(csvUrl);
+  if(!res.ok) throw new Error('Failed to fetch');
+  const text = await res.text();
+  const lines = text.split('\n').filter(l=>l.trim());
+  if(!lines.length) return [];
+  const rows = lines.map(l=>{
+    const parts = l.split(',');
+    return parts.map(x=>x.trim().replace(/^"|"$/g, ''));
+  });
+  let start = 0;
+  if(rows[0] && /user|email|pass/i.test(rows[0].join(' '))) start = 1;
+  return rows.slice(start).map(r=>{
+    return { username: r[0] || '', password: r[1] || '' };
+  }).filter(a=>a.username);
+}
+
+function renderMetaProducts(){
+  const box = $('metaProductsList');
+  if(!META_PRODUCTS.length){
+    box.innerHTML = `<div class="empty"><div class="eico">🎭</div><div class="etxt">কোনো Meta Product নেই। Add করুন।</div></div>`;
+    return;
+  }
+  box.innerHTML = META_PRODUCTS.map(p=>{
+    const logo = safeUrl(p.logo) || 'https://ui-avatars.com/api/?name='+encodeURIComponent(p.name||'M')+'&background=8b5cf6&color=fff';
+    const active = p.status !== false;
+    const cat = CATEGORIES.find(c=>c.id === p.category) || { name: p.category||'—', icon: '🎭' };
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <img src="${esc(logo)}" />
+          <div class="card-title-text">
+            <div class="ct-name">${esc(p.name||'-')} <span class="badge badge-cat">${esc(cat.icon||'🎭')} ${esc(cat.name||'-')}</span></div>
+            <div class="ct-sub">৳${fmtD(p.price)} per account</div>
+          </div>
+        </div>
+        <span class="badge ${active?'badge-active':'badge-stop'}">${active?'Active':'Hidden'}</span>
+      </div>
+      ${p.sheetUrl ? `<div style="font-size:11px;color:#7c3aed;word-break:break-all;margin-bottom:6px;">🔗 ${esc(p.sheetUrl)}</div>` : ''}
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">${esc(p.description||'')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-purple btn-icon" onclick="viewMetaAccounts('${p.id}')">👁 Accounts</button>
+        <button class="btn btn-primary btn-icon" onclick="editMetaProduct('${p.id}')">✏️ Edit</button>
+        <button class="btn ${active?'btn-warning':'btn-success'} btn-icon" onclick="toggleMetaProduct('${p.id}', ${active})">${active?'🔴 Hide':'🟢 Show'}</button>
+        <button class="btn btn-danger btn-icon" onclick="deleteMetaProduct('${p.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function viewMetaAccounts(pid){
+  const p = META_PRODUCTS.find(x=>x.id===pid);
+  if(!p) return;
+  CURRENT_META_PRODUCT_ID = pid;
+  CURRENT_META_ACCOUNTS = await getMetaAccounts(p);
+  META_ACCOUNT_FILTER = 'all';
+  $('metaAccountsTitle').textContent = '🎭 ' + (p.name||'Accounts') + ' — ' + CURRENT_META_ACCOUNTS.length + ' accounts';
+  renderMetaAccountsList();
+  openModal('metaAccountsModal');
+}
+
+function filterMetaAccounts(f){
+  META_ACCOUNT_FILTER = f;
+  document.querySelectorAll('[data-macc]').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('[data-macc="'+f+'"]').forEach(x=>x.classList.add('active'));
+  renderMetaAccountsList();
+}
+
+function renderMetaAccountsList(){
+  const box = $('metaAccountsList');
+  let list = CURRENT_META_ACCOUNTS.slice();
+  if(META_ACCOUNT_FILTER !== 'all') list = list.filter(a=>a.status === META_ACCOUNT_FILTER);
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">📦</div><div class="etxt">কোনো অ্যাকাউন্ট নেই।</div></div>'; return; }
+  box.innerHTML = list.map(a=>`
+    <div class="meta-account-row ${a.status==='sold'?'sold':''}">
+      <div class="ma-user">👤 ${esc(a.username)}</div>
+      <div class="ma-pass">🔑 ${esc(a.password)}</div>
+      <div class="ma-status ${a.status}">${a.status==='sold'?'SOLD':'FREE'}</div>
+    </div>
+  `).join('');
+}
+
+function openMetaModal(){
+  $('metaModalTitle').textContent = '➕ Add Meta Product';
+  $('meta_id').value = '';
+  $('meta_name').value = '';
+  $('meta_sheetUrl').value = '';
+  $('meta_price').value = SETTINGS.metaDefaultPrice || '0.50';
+  $('meta_status').value = 'active';
+  $('meta_description').value = '';
+  $('meta_manualAccounts').value = '';
+  IMG_STORE.meta_logo = '';
+  if($('meta_logo_preview')) $('meta_logo_preview').classList.remove('show');
+  if($('meta_logo_wrap')) $('meta_logo_wrap').classList.remove('has-image');
+  populateMetaCategoryDropdown();
+  openModal('metaModal');
+}
+
+async function populateMetaCategoryDropdown(){
+  const sel = $('meta_category');
+  if(!sel) return;
+  try{
+    const snap = await db.ref('categories').once('value');
+    const cats = snap.val() || {};
+    CATEGORIES = Object.keys(cats).map(k=>({ id:k, ...cats[k] }));
+    const metaCats = CATEGORIES.filter(c=>c.type === 'meta');
+    sel.innerHTML = '<option value="">-- Select Meta Category --</option>'
+      + metaCats.map(c=>`<option value="${esc(c.id)}">${esc(c.icon||'🎭')} ${esc(c.name)}</option>`).join('');
+  }catch(e){}
+}
+
+async function editMetaProduct(pid){
+  await populateMetaCategoryDropdown();
+  const p = META_PRODUCTS.find(x=>x.id===pid);
+  if(!p) return;
+  $('metaModalTitle').textContent = '✏️ Edit Meta Product';
+  $('meta_id').value = p.id;
+  $('meta_name').value = p.name || '';
+  $('meta_sheetUrl').value = p.sheetUrl || '';
+  $('meta_price').value = p.price || '0.50';
+  $('meta_status').value = p.status === false ? 'hidden' : 'active';
+  $('meta_description').value = p.description || '';
+  $('meta_manualAccounts').value = p.manualAccounts || '';
+  $('meta_category').value = p.category || '';
+  setImagePreview('meta_logo', p.logo || '');
+  openModal('metaModal');
+}
+
+async function saveMetaProduct(){
+  const existingId = ($('meta_id').value || '').trim();
+  const id = existingId || ('meta_' + Date.now());
+  const name = $('meta_name').value.trim();
+  const category = $('meta_category').value.trim();
+  const sheetUrl = $('meta_sheetUrl').value.trim();
+  const manualAccounts = $('meta_manualAccounts').value.trim();
+
+  if(!name){ toast('Product Name দিন','err'); return; }
+  if(!category){ toast('Meta Category সিলেক্ট করুন','err'); return; }
+  if(!sheetUrl && !manualAccounts){ toast('Sheet URL বা Manual Account দিন','err'); return; }
+
+  const payload = {
+    name,
+    category,
+    logo: IMG_STORE.meta_logo || '',
+    sheetUrl,
+    manualAccounts,
+    price: num($('meta_price').value) || 0.50,
+    description: $('meta_description').value.trim(),
+    status: $('meta_status').value === 'active',
+    updatedAt: Date.now()
+  };
+  if(!existingId) payload.createdAt = Date.now();
+
+  try{
+    if(existingId) await db.ref('metaProducts/' + id).update(payload);
+    else await db.ref('metaProducts/' + id).set(payload);
+    toast('Save হয়েছে ✅','ok');
+    closeModal('metaModal');
+    loadMetaProducts();
+  }catch(e){ toast('Save হয়নি','err'); }
+}
+
+async function toggleMetaProduct(pid, isActive){
+  try{ await db.ref('metaProducts/' + pid).update({ status: !isActive }); loadMetaProducts(); }
+  catch(e){ toast('হয়নি','err'); }
+}
+
+function deleteMetaProduct(pid){
+  confirmAction('Meta Product মুছে ফেলবেন? Sold অ্যাকাউন্টও রিমুভ হবে।', async ()=>{
+    try{
+      await db.ref('metaProducts/' + pid).remove();
+      await db.ref('metaSold/' + pid).remove();
+      toast('Deleted','ok');
+      loadMetaProducts();
+    }catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+async function loadMetaPurchases(){
+  const box = $('metaPurchasesList');
+  if(!box) return;
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('metaPurchases').once('value');
+    const data = snap.val() || {};
+    META_PURCHASES = Object.keys(data).map(k=>({ id:k, ...data[k] }))
+      .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderMetaPurchases();
+  }catch(e){}
+}
+
+function renderMetaPurchases(){
+  const box = $('metaPurchasesList');
+  let list = META_PURCHASES.slice();
+  if(META_PURCHASE_FILTER === 'today'){
+    const start = new Date(); start.setHours(0,0,0,0);
+    list = list.filter(x=>(x.createdAt||0) >= start.getTime());
+  } else if(META_PURCHASE_FILTER === 'week'){
+    const start = Date.now() - 7*24*60*60*1000;
+    list = list.filter(x=>(x.createdAt||0) >= start);
+  }
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">🧾</div><div class="etxt">কোনো Purchase নেই।</div></div>'; return; }
+  box.innerHTML = list.slice(0,100).map(p=>{
+    const dt = p.createdAt ? new Date(p.createdAt).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title-text" style="flex:1;">
+          <div class="ct-name">#${esc(p.trxId||p.id)} • ${esc(p.productName||'-')}</div>
+          <div class="ct-sub">${esc(p.firstName||'')} @${esc(p.username||'-')} • ${esc(dt)}</div>
+        </div>
+        <span class="badge badge-completed">৳${fmtD(p.totalPrice)}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;">🎭 ${p.accountsCount||0} accounts • Telegram: ${esc(p.telegramId||'-')}</div>
+      <div style="font-size:11px;color:#7c3aed;word-break:break-all;">👤 ${(p.usernames||[]).slice(0,3).map(u=>esc(u)).join(', ')}${(p.usernames||[]).length>3?'...':''}</div>
+    </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('#metaPurchaseFilters .filter-chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#metaPurchaseFilters .filter-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    META_PURCHASE_FILTER = c.getAttribute('data-mfilter');
+    renderMetaPurchases();
+  });
+});
+
+/* =========================================================
+   ADD MONEY
+========================================================= */
+async function loadAddMoney(){
+  const box = $('addMoneyList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('addMoneyRequests').once('value');
+    const data = snap.val() || {};
+    ADD_MONEY_REQS = Object.keys(data).map(k=>({ id:k, ...data[k] })).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderAddMoneyList();
+  }catch(e){}
+}
+function renderAddMoneyList(){
+  const box = $('addMoneyList');
+  let list = ADD_MONEY_REQS.slice();
+  if(AM_FILTER !== 'all') list = list.filter(x=>x.status === AM_FILTER);
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">➕</div><div class="etxt">Request নেই।</div></div>'; return; }
+  box.innerHTML = list.map(r=>{
+    const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    return `<div class="order-item" data-amid="${esc(r.id)}">
+      <div class="order-item-top">
+        <div>
+          <div class="order-item-id">#${esc(r.trxId||r.id)}</div>
+          <div class="order-item-sub">${esc(r.firstName||'')} @${esc(r.username||'-')} • ${esc(dt)}</div>
+        </div>
+        <span class="badge ${statusClass(r.status)}">${statusLabel(r.status)}</span>
+      </div>
+      <div class="order-item-grid">
+        <div><div class="oi-label">Method</div><div class="oi-value">${esc(r.method||'-')}</div></div>
+        <div><div class="oi-label">TrxID</div><div class="oi-value">${esc(r.userTrxId||'-')}</div></div>
+        <div><div class="oi-label">Amount</div><div class="oi-value" style="color:#22c55e;">৳${fmtD(r.amount)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-amid]').forEach(el=>{
+    el.onclick = ()=> showAddMoneyDetail(el.getAttribute('data-amid'));
+  });
+}
+document.querySelectorAll('#amFilters .filter-chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#amFilters .filter-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    AM_FILTER = c.getAttribute('data-astatus');
+    renderAddMoneyList();
+  });
+});
+function showAddMoneyDetail(id){
+  const r = ADD_MONEY_REQS.find(x=>x.id===id);
+  if(!r) return;
+  const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB') : '';
+  const proof = r.proofUrl ? `<img class="detail-image" src="${esc(r.proofUrl)}" />` : '<div style="color:var(--muted);font-size:12px;padding:10px;">No proof</div>';
+  $('amDetailContent').innerHTML = `
+    <div class="detail-row"><span class="dr-label">TrxID</span><span class="dr-value">#${esc(r.trxId||r.id)}</span></div>
+    <div class="detail-row"><span class="dr-label">Status</span><span class="dr-value"><span class="badge ${statusClass(r.status)}">${statusLabel(r.status)}</span></span></div>
+    <div class="detail-row"><span class="dr-label">Name</span><span class="dr-value">${esc(r.firstName||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Username</span><span class="dr-value">@${esc(r.username||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Telegram ID</span><span class="dr-value">${esc(r.telegramId||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Method</span><span class="dr-value">${esc(r.method||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">TrxID</span><span class="dr-value">${esc(r.userTrxId||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Amount</span><span class="dr-value" style="color:#22c55e;">৳${fmtD(r.amount)}</span></div>
+    <div class="detail-row"><span class="dr-label">Date</span><span class="dr-value">${esc(dt)}</span></div>
+    <div style="font-size:12px;font-weight:700;margin-top:12px;margin-bottom:6px;">📷 Screenshot</div>
+    ${proof}`;
+  const s = String(r.status||'pending').toLowerCase();
+  let btns = '';
+  if(s !== 'completed') btns += `<button class="btn btn-success" onclick="approveAddMoney('${r.id}','${r.telegramId}','${num(r.amount)}')">✅ Approve</button>`;
+  if(s !== 'rejected') btns += `<button class="btn btn-danger" onclick="rejectAddMoney('${r.id}')">❌ Reject</button>`;
+  btns += `<button class="btn btn-ghost" onclick="deleteAddMoney('${r.id}')">🗑 Delete</button>`;
+  $('amActions').innerHTML = btns;
+  openModal('amModal');
+}
+async function approveAddMoney(id, telegramId, amount){
+  try{
+    await db.ref('addMoneyRequests/' + id).update({ status: 'completed', approvedAt: Date.now() });
+    await db.ref('transactions/' + id).update({ status: 'completed', approvedAt: Date.now() });
+    const b = await db.ref('users/' + telegramId + '/balance').once('value');
+    const c = num(b.val()) || 0;
+    await db.ref('users/' + telegramId + '/balance').set(c + num(amount));
+    toast('Approved + ৳'+fmtD(amount)+' Balance যোগ হয়েছে','ok');
+    closeModal('amModal');
+    loadAddMoney();
+  }catch(e){ toast('হয়নি','err'); }
+}
+async function rejectAddMoney(id){
+  try{
+    await db.ref('addMoneyRequests/' + id).update({ status: 'rejected', rejectedAt: Date.now() });
+    await db.ref('transactions/' + id).update({ status: 'rejected', rejectedAt: Date.now() });
+    toast('Rejected','ok');
+    closeModal('amModal');
+    loadAddMoney();
+  }catch(e){ toast('হয়নি','err'); }
+}
+function deleteAddMoney(id){
+  confirmAction('Delete?', async ()=>{
+    try{ await db.ref('addMoneyRequests/' + id).remove(); closeModal('amModal'); loadAddMoney(); toast('Deleted','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   WITHDRAW
+========================================================= */
+async function loadWithdraws(){
+  const box = $('withdrawList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('withdrawRequests').once('value');
+    const data = snap.val() || {};
+    WITHDRAW_REQS = Object.keys(data).map(k=>({ id:k, ...data[k] })).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderWithdrawList();
+  }catch(e){}
+}
+function renderWithdrawList(){
+  const box = $('withdrawList');
+  let list = WITHDRAW_REQS.slice();
+  if(WD_FILTER !== 'all') list = list.filter(x=>x.status === WD_FILTER);
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">💸</div><div class="etxt">Request নেই।</div></div>'; return; }
+  box.innerHTML = list.map(r=>{
+    const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    return `<div class="order-item" data-wdid="${esc(r.id)}">
+      <div class="order-item-top">
+        <div>
+          <div class="order-item-id">#${esc(r.trxId||r.id)}</div>
+          <div class="order-item-sub">${esc(r.firstName||'')} @${esc(r.username||'-')} • ${esc(dt)}</div>
+        </div>
+        <span class="badge ${statusClass(r.status)}">${statusLabel(r.status)}</span>
+      </div>
+      <div class="order-item-grid">
+        <div><div class="oi-label">Method</div><div class="oi-value">${esc(r.method||'-')}</div></div>
+        <div><div class="oi-label">Number</div><div class="oi-value">${esc(r.number||'-')}</div></div>
+        <div><div class="oi-label">Amount</div><div class="oi-value" style="color:#ef4444;">৳${fmtD(r.amount)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-wdid]').forEach(el=>{
+    el.onclick = ()=> showWithdrawDetail(el.getAttribute('data-wdid'));
+  });
+}
+document.querySelectorAll('#wdFilters .filter-chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#wdFilters .filter-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    WD_FILTER = c.getAttribute('data-wstatus');
+    renderWithdrawList();
+  });
+});
+function showWithdrawDetail(id){
+  const r = WITHDRAW_REQS.find(x=>x.id===id);
+  if(!r) return;
+  const dt = r.createdAt ? new Date(r.createdAt).toLocaleString('en-GB') : '';
+  $('wdDetailContent').innerHTML = `
+    <div class="detail-row"><span class="dr-label">TrxID</span><span class="dr-value">#${esc(r.trxId||r.id)}</span></div>
+    <div class="detail-row"><span class="dr-label">Status</span><span class="dr-value"><span class="badge ${statusClass(r.status)}">${statusLabel(r.status)}</span></span></div>
+    <div class="detail-row"><span class="dr-label">Name</span><span class="dr-value">${esc(r.firstName||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Username</span><span class="dr-value">@${esc(r.username||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Telegram ID</span><span class="dr-value">${esc(r.telegramId||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Method</span><span class="dr-value">${esc(r.method||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Number</span><span class="dr-value">${esc(r.number||'-')}</span></div>
+    <div class="detail-row"><span class="dr-label">Amount</span><span class="dr-value" style="color:#ef4444;">৳${fmtD(r.amount)}</span></div>
+    <div class="detail-row"><span class="dr-label">Date</span><span class="dr-value">${esc(dt)}</span></div>`;
+  const s = String(r.status||'pending').toLowerCase();
+  let btns = '';
+  if(s !== 'completed') btns += `<button class="btn btn-success" onclick="approveWithdraw('${r.id}')">✅ Approve</button>`;
+  if(s !== 'rejected') btns += `<button class="btn btn-danger" onclick="rejectWithdraw('${r.id}','${r.telegramId}','${num(r.amount)}')">❌ Reject & Refund</button>`;
+  btns += `<button class="btn btn-ghost" onclick="deleteWithdraw('${r.id}')">🗑 Delete</button>`;
+  $('wdActions').innerHTML = btns;
+  openModal('wdModal');
+}
+async function approveWithdraw(id){
+  try{
+    await db.ref('withdrawRequests/' + id).update({ status: 'completed', approvedAt: Date.now() });
+    await db.ref('transactions/' + id).update({ status: 'completed', approvedAt: Date.now() });
+    toast('Approved','ok'); closeModal('wdModal'); loadWithdraws();
+  }catch(e){ toast('হয়নি','err'); }
+}
+async function rejectWithdraw(id, telegramId, amount){
+  try{
+    await db.ref('withdrawRequests/' + id).update({ status: 'rejected', rejectedAt: Date.now() });
+    await db.ref('transactions/' + id).update({ status: 'rejected', rejectedAt: Date.now() });
+    const b = await db.ref('users/' + telegramId + '/balance').once('value');
+    const c = num(b.val()) || 0;
+    await db.ref('users/' + telegramId + '/balance').set(c + num(amount));
+    toast('Rejected + ৳'+fmtD(amount)+' Refunded','ok'); closeModal('wdModal'); loadWithdraws();
+  }catch(e){ toast('হয়নি','err'); }
+}
+function deleteWithdraw(id){
+  confirmAction('Delete?', async ()=>{
+    try{ await db.ref('withdrawRequests/' + id).remove(); closeModal('wdModal'); loadWithdraws(); toast('Deleted','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   APPS (with Range Builder)
+========================================================= */
+async function loadApps(){
+  const box = $('appsList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('apps').once('value');
+    const data = snap.val() || {};
+    APPS = Object.keys(data).map(k=>({ id:k, ...data[k] })).sort((a,b)=>{
+      const sa = a.status !== false ? 0 : 1;
+      const sb = b.status !== false ? 0 : 1;
+      if(sa !== sb) return sa - sb;
+      return (a.name||'').localeCompare(b.name||'');
+    });
+    renderApps();
+  }catch(e){}
+}
+function renderApps(){
+  const box = $('appsList');
+  if(!APPS.length){
+    box.innerHTML = `<div class="empty"><div class="eico">💰</div><div class="etxt">App নেই। "⚡ Seed" চাপুন।</div>
+      <button class="btn btn-primary btn-icon" onclick="seedDefaults()" style="margin-top:14px;">⚡ Seed</button></div>`;
+    return;
+  }
+  box.innerHTML = APPS.map(a=>{
+    const active = a.status !== false;
+    const logo = safeUrl(a.logo) || 'https://ui-avatars.com/api/?name='+encodeURIComponent(a.name||'A')+'&background=2f88ff&color=fff';
+
+    let rangeHTML = '';
+    if(a.ranges && typeof a.ranges === 'object' && Object.keys(a.ranges).length){
+      const rks = Object.keys(a.ranges).sort((x,y)=>{
+        const rx = a.ranges[x], ry = a.ranges[y];
+        return (rx.min||0) - (ry.min||0);
+      });
+      rangeHTML = '<div style="background:#f7f9fc;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #e2e8f0;">'
+        + '<div style="font-size:10.5px;font-weight:800;color:#1e40af;margin-bottom:8px;">📊 '+rks.length+' Ranges</div>'
+        + rks.map(rk=>{
+          const r = a.ranges[rk];
+          const lbl = r.label || (fmt(r.min)+' - '+fmt(r.max));
+          return '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;padding:4px 0;border-bottom:1px dashed #e2e8f0;">'
+            + '<span style="color:var(--muted);font-weight:700;">'+esc(lbl)+'</span>'
+            + '<span style="font-weight:900;color:#22c55e;">৳'+fmtD(r.rate)+'</span>'
+            + '</div>';
+        }).join('')
+        + '</div>';
+    }
+
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <img src="${esc(logo)}" />
+          <div class="card-title-text">
+            <div class="ct-name">${esc(a.name||'App')}</div>
+            <div class="ct-sub">Per ${fmt(a.ratePer||1000)} Coins • Min ${fmt(a.minimumCoin)}</div>
+          </div>
+        </div>
+        <span class="badge ${active?'badge-active':'badge-stop'}">${active?'Active':'Stop'}</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">📤 ${esc(a.receivingAccount||'-')}</div>
+      ${rangeHTML}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn ${active?'btn-danger':'btn-success'} btn-icon" onclick="toggleApp('${a.id}', ${active})">${active?'🔴 Stop':'🟢 Active'}</button>
+        <button class="btn btn-primary btn-icon" onclick="editApp('${a.id}')">✏️ Edit</button>
+        <button class="btn btn-ghost btn-icon" onclick="deleteApp('${a.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* APP RANGES BUILDER */
+function addAppRangeRow(data){
+  const d = data || { min:'', max:'', rate:'', label:'' };
+  APP_RANGES.push({ min: d.min, max: d.max, rate: d.rate, label: d.label || '' });
+  renderAppRangesBuilder();
+}
+function removeAppRangeRow(idx){
+  APP_RANGES.splice(idx, 1);
+  renderAppRangesBuilder();
+}
+function fillDefaultAppRanges(){
+  APP_RANGES = DEFAULT_RANGE_TEMPLATE.map(r=>({ ...r }));
+  renderAppRangesBuilder();
+  toast('Default ৪টি Range যোগ হয়েছে','ok');
+}
+function renderAppRangesBuilder(){
+  const box = $('appRangesBuilder');
+  if(!box) return;
+  if(!APP_RANGES.length){
+    box.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:12px;">কোনো Range নেই। নিচের বাটনে ক্লিক করুন।</div>';
+    return;
+  }
+  box.innerHTML = APP_RANGES.map((r, i)=>{
+    return `<div class="range-builder-row">
+      <div>
+        <div class="rb-label">Min Coin</div>
+        <input type="number" value="${esc(r.min)}" placeholder="10000"
+          oninput="APP_RANGES[${i}].min=this.value; autoLabelRange(${i})" />
+      </div>
+      <div>
+        <div class="rb-label">Max Coin</div>
+        <input type="number" value="${esc(r.max)}" placeholder="100000"
+          oninput="APP_RANGES[${i}].max=this.value; autoLabelRange(${i})" />
+      </div>
+      <div>
+        <div class="rb-label">Rate (৳)</div>
+        <input type="number" step="0.01" value="${esc(r.rate)}" placeholder="10"
+          oninput="APP_RANGES[${i}].rate=this.value" />
+      </div>
+      <div>
+        <div class="rb-label">Label</div>
+        <input type="text" value="${esc(r.label)}" placeholder="10K - 100K"
+          oninput="APP_RANGES[${i}].label=this.value" />
+      </div>
+      <button class="rb-del" onclick="removeAppRangeRow(${i})" type="button">✕</button>
+    </div>`;
+  }).join('');
+}
+function autoLabelRange(i){
+  const r = APP_RANGES[i];
+  if(!r) return;
+  const min = num(r.min), max = num(r.max);
+  if(!min || !max) return;
+  const fmtShort = (n)=>{
+    if(n >= 1000000) return (n/1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + 'M';
+    if(n >= 1000) return (n/1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K';
+    return String(n);
+  };
+  r.label = fmtShort(min) + ' - ' + fmtShort(max);
+  const rows = $('appRangesBuilder').querySelectorAll('.range-builder-row');
+  if(rows[i]){
+    const inputs = rows[i].querySelectorAll('input');
+    if(inputs[3]) inputs[3].value = r.label;
+  }
+}
+function collectAppRanges(){
+  const cleaned = [];
+  for(let i=0;i<APP_RANGES.length;i++){
+    const r = APP_RANGES[i];
+    const min = num(r.min), max = num(r.max), rate = num(r.rate);
+    if(min > 0 && max > 0 && rate > 0 && max > min){
+      cleaned.push({
+        min, max, rate,
+        label: r.label || (min + ' - ' + max)
+      });
+    }
+  }
+  return cleaned;
+}
+
+function openAppModal(){
+  $('appModalTitle').textContent = '➕ Add Coin App';
+  $('app_id').value = '';
+  $('app_name').value = '';
+  $('app_ratePer').value = '1000';
+  $('app_color').value = 'blue';
+  $('app_receivingAccount').value = '';
+  $('app_description').value = '';
+  $('app_status').checked = true;
+  IMG_STORE.app_logo = '';
+  if($('app_logo_preview')) $('app_logo_preview').classList.remove('show');
+  if($('app_logo_wrap')) $('app_logo_wrap').classList.remove('has-image');
+
+  APP_RANGES = DEFAULT_RANGE_TEMPLATE.map(r=>({ ...r }));
+  renderAppRangesBuilder();
+
+  openModal('appModal');
+}
+
+function editApp(id){
+  const a = APPS.find(x=>x.id===id);
+  if(!a) return;
+  $('appModalTitle').textContent = '✏️ Edit App';
+  $('app_id').value = a.id;
+  $('app_name').value = a.name || '';
+  $('app_ratePer').value = a.ratePer || 1000;
+  $('app_color').value = a.color || 'blue';
+  $('app_receivingAccount').value = a.receivingAccount || '';
+  $('app_description').value = a.description || '';
+  $('app_status').checked = a.status !== false;
+  setImagePreview('app_logo', a.logo || '');
+
+  APP_RANGES = [];
+  if(a.ranges && typeof a.ranges === 'object'){
+    const rks = Object.keys(a.ranges).sort((x,y)=>{
+      const rx = a.ranges[x], ry = a.ranges[y];
+      return (rx.min||0) - (ry.min||0);
+    });
+    rks.forEach(k=>{
+      const r = a.ranges[k] || {};
+      APP_RANGES.push({
+        min: r.min || '',
+        max: r.max || '',
+        rate: r.rate || '',
+        label: r.label || ''
+      });
+    });
+  }
+  if(!APP_RANGES.length){
+    APP_RANGES = DEFAULT_RANGE_TEMPLATE.map(r=>({ ...r }));
+  }
+  renderAppRangesBuilder();
+
+  openModal('appModal');
+}
+
+async function saveApp(){
+  const existingId = ($('app_id').value || '').trim();
+  const id = existingId || ('app_' + Date.now());
+  const name = $('app_name').value.trim();
+  if(!name){ toast('Name দিন','err'); return; }
+
+  const ranges = collectAppRanges();
+  if(!ranges.length){
+    toast('কমপক্ষে একটি Range দিন','err');
+    return;
+  }
+
+  const rangesObj = {};
+  ranges.forEach((r, i)=>{
+    rangesObj['r' + (i+1)] = r;
+  });
+
+  const minCoin = Math.min(...ranges.map(r=>r.min));
+  const lowestRate = Math.min(...ranges.map(r=>r.rate));
+
+  const payload = {
+    name,
+    logo: IMG_STORE.app_logo || '',
+    rate: lowestRate,
+    ratePer: num($('app_ratePer').value) || 1000,
+    minimumCoin: minCoin,
+    receivingAccount: $('app_receivingAccount').value.trim(),
+    description: $('app_description').value.trim(),
+    color: $('app_color').value,
+    status: $('app_status').checked,
+    ranges: rangesObj,
+    rangeCount: ranges.length,
+    updatedAt: Date.now()
+  };
+  if(!existingId) payload.createdAt = Date.now();
+
+  try{
+    if(existingId) await db.ref('apps/' + id).update(payload);
+    else await db.ref('apps/' + id).set(payload);
+    toast('Save হয়েছে ✅','ok');
+    closeModal('appModal');
+    loadApps();
+  }catch(e){ console.error(e); toast('Save হয়নি','err'); }
+}
+
+async function toggleApp(id, isActive){
+  try{ await db.ref('apps/' + id).update({ status: !isActive }); loadApps(); }
+  catch(e){ toast('হয়নি','err'); }
+}
+function deleteApp(id){
+  confirmAction('App Delete?', async ()=>{
+    try{ await db.ref('apps/'+id).remove(); loadApps(); toast('Deleted','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+async function seedDefaults(){
+  confirmAction('৪টি Default App (৪টি Range সহ) যোগ করবেন?', async ()=>{
+    try{
+      const updates = {};
+      const defaultApps = {
+        coinsta: {
+          name:'Coinsta', logo:'https://i.ibb.co/QvGvwDkM/file-128.jpg',
+          color:'orange', status:true, receivingAccount:'example@email.com',
+          ratePer:1000, minimumCoin:10000, rate:10,
+          ranges: {
+            r1:{ min:10000,  max:100000,  rate:10,   label:'10K - 100K' },
+            r2:{ min:100000, max:500000,  rate:10.2, label:'100K - 500K' },
+            r3:{ min:500000, max:1000000, rate:10.5, label:'500K - 1M' },
+            r4:{ min:1000000,max:5000000, rate:11,   label:'1M - 5M' }
+          },
+          createdAt: Date.now()
+        },
+        newtop: {
+          name:'New Top Coin', logo:'https://i.ibb.co/vxm9WTv5/file-126.jpg',
+          color:'blue', status:true, receivingAccount:'example@email.com',
+          ratePer:1000, minimumCoin:10000, rate:5.5,
+          ranges: {
+            r1:{ min:10000,  max:100000,  rate:5.5,  label:'10K - 100K' },
+            r2:{ min:100000, max:500000,  rate:5.8,  label:'100K - 500K' },
+            r3:{ min:500000, max:1000000, rate:6.2,  label:'500K - 1M' },
+            r4:{ min:1000000,max:5000000, rate:6.5,  label:'1M - 5M' }
+          },
+          createdAt: Date.now()
+        },
+        nscoin: {
+          name:'NS Coin', logo:'https://i.ibb.co/1tSczb5K/file-125.jpg',
+          color:'green', status:true, receivingAccount:'example@email.com',
+          ratePer:1000, minimumCoin:10000, rate:9.5,
+          ranges: {
+            r1:{ min:10000,  max:100000,  rate:9.5,  label:'10K - 100K' },
+            r2:{ min:100000, max:500000,  rate:9.8,  label:'100K - 500K' },
+            r3:{ min:500000, max:1000000, rate:10.2, label:'500K - 1M' },
+            r4:{ min:1000000,max:5000000, rate:10.5, label:'1M - 5M' }
+          },
+          createdAt: Date.now()
+        },
+        oldtop: {
+          name:'Old Top Coin', logo:'https://i.ibb.co/wFk9fCbk/file-127.jpg',
+          color:'purple', status:true, receivingAccount:'example@email.com',
+          ratePer:1000, minimumCoin:10000, rate:4,
+          ranges: {
+            r1:{ min:10000,  max:100000,  rate:4,    label:'10K - 100K' },
+            r2:{ min:100000, max:500000,  rate:4.3,  label:'100K - 500K' },
+            r3:{ min:500000, max:1000000, rate:4.6,  label:'500K - 1M' },
+            r4:{ min:1000000,max:5000000, rate:5,    label:'1M - 5M' }
+          },
+          createdAt: Date.now()
+        }
+      };
+      Object.keys(defaultApps).forEach(k=>{
+        updates['apps/'+k] = defaultApps[k];
+      });
+      await db.ref().update(updates);
+      toast('৪টি App + ৪ Range যোগ হয়েছে ✅','ok');
+      loadApps();
+    }catch(e){ console.error(e); toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   PAYMENTS
+========================================================= */
+async function loadPayments(){
+  const box = $('paymentsList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('paymentMethods').once('value');
+    const data = snap.val() || {};
+    PAYMENTS = Object.keys(data).map(k=>({ id:k, ...data[k] }));
+    renderPayments();
+  }catch(e){}
+}
+function renderPayments(){
+  const box = $('paymentsList');
+  if(!PAYMENTS.length){
+    box.innerHTML = `<div class="empty"><div class="eico">💳</div><div class="etxt">Method নেই। "⚡ Seed" চাপুন।</div>
+      <button class="btn btn-primary btn-icon" onclick="seedPayments()" style="margin-top:14px;">⚡ Seed</button></div>`;
+    return;
+  }
+  box.innerHTML = PAYMENTS.map(p=>{
+    const active = p.status !== false;
+    const logo = safeUrl(p.logo) || 'https://ui-avatars.com/api/?name='+encodeURIComponent(p.name||'P')+'&background=2f88ff&color=fff';
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <img src="${esc(logo)}" />
+          <div class="card-title-text">
+            <div class="ct-name">${esc(p.name||'-')}</div>
+            <div class="ct-sub">📞 ${esc(p.adminNumber||p.number||'-')}</div>
+          </div>
+        </div>
+        <span class="badge ${active?'badge-active':'badge-stop'}">${active?'Active':'Inactive'}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn ${active?'btn-danger':'btn-success'} btn-icon" onclick="togglePay('${p.id}', ${active})">${active?'🔴 Disable':'🟢 Enable'}</button>
+        <button class="btn btn-primary btn-icon" onclick="editPay('${p.id}')">✏️ Edit</button>
+        <button class="btn btn-ghost btn-icon" onclick="deletePay('${p.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function seedPayments(){
+  confirmAction('৩টি Default Method যোগ করবেন?', async ()=>{
+    try{
+      const updates = {};
+      Object.keys(DEFAULT_SEED_PAYMENTS).forEach(k=>{ updates['paymentMethods/'+k] = DEFAULT_SEED_PAYMENTS[k]; });
+      await db.ref().update(updates);
+      toast('Added','ok'); loadPayments();
+    }catch(e){ toast('হয়নি','err'); }
+  });
+}
+function openPayModal(){
+  $('payModalTitle').textContent = '➕ Add Payment Method';
+  $('pay_id').value = '';
+  $('pay_name').value = '';
+  $('pay_adminNumber').value = '';
+  $('pay_number').value = '';
+  $('pay_instructions').value = '';
+  $('pay_status').checked = true;
+  IMG_STORE.pay_logo = '';
+  if($('pay_logo_preview')) $('pay_logo_preview').classList.remove('show');
+  if($('pay_logo_wrap')) $('pay_logo_wrap').classList.remove('has-image');
+  openModal('payModal');
+}
+function editPay(id){
+  const p = PAYMENTS.find(x=>x.id===id);
+  if(!p) return;
+  $('payModalTitle').textContent = '✏️ Edit Payment';
+  $('pay_id').value = p.id;
+  $('pay_name').value = p.name || '';
+  $('pay_adminNumber').value = p.adminNumber || p.number || '';
+  $('pay_number').value = p.number || '';
+  $('pay_instructions').value = p.instructions || '';
+  $('pay_status').checked = p.status !== false;
+  setImagePreview('pay_logo', p.logo || '');
+  openModal('payModal');
+}
+async function savePay(){
+  const existingId = ($('pay_id').value || '').trim();
+  const id = existingId || ('pay_' + Date.now());
+  const name = $('pay_name').value.trim();
+  if(!name){ toast('Name দিন','err'); return; }
+  const payload = {
+    name,
+    logo: IMG_STORE.pay_logo || '',
+    adminNumber: $('pay_adminNumber').value.trim(),
+    number: $('pay_number').value.trim() || $('pay_adminNumber').value.trim(),
+    instructions: $('pay_instructions').value.trim(),
+    status: $('pay_status').checked,
+    updatedAt: Date.now()
+  };
+  if(!existingId) payload.createdAt = Date.now();
+  try{
+    if(existingId) await db.ref('paymentMethods/' + id).update(payload);
+    else await db.ref('paymentMethods/' + id).set(payload);
+    toast('Saved','ok'); closeModal('payModal'); loadPayments();
+  }catch(e){ toast('হয়নি','err'); }
+}
+async function togglePay(id, isActive){
+  try{ await db.ref('paymentMethods/'+id).update({ status: !isActive }); loadPayments(); }
+  catch(e){ toast('হয়নি','err'); }
+}
+function deletePay(id){
+  confirmAction('Delete?', async ()=>{
+    try{ await db.ref('paymentMethods/'+id).remove(); loadPayments(); toast('Deleted','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   TUTORIALS
+========================================================= */
+async function loadTutorials(){
+  const box = $('tutorialsList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('tutorials').once('value');
+    const data = snap.val() || {};
+    TUTORIALS = Object.keys(data).map(k=>({ id:k, ...data[k] }));
+    renderTutorials();
+  }catch(e){}
+}
+function renderTutorials(){
+  const box = $('tutorialsList');
+  if(!TUTORIALS.length){
+    box.innerHTML = '<div class="empty"><div class="eico">🎥</div><div class="etxt">Tutorial নেই।</div></div>';
+    return;
+  }
+  box.innerHTML = TUTORIALS.map(t=>{
+    const active = t.status !== false;
+    const thumb = safeUrl(t.thumbnail) || 'https://via.placeholder.com/80/f1f5f9/2f88ff?text=T';
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <img src="${esc(thumb)}" />
+          <div class="card-title-text">
+            <div class="ct-name">${esc(t.title||'-')}</div>
+            <div class="ct-sub">${esc((t.videoUrl||'').slice(0,40))}</div>
+          </div>
+        </div>
+        <span class="badge ${active?'badge-active':'badge-stop'}">${active?'Active':'Hidden'}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn ${active?'btn-danger':'btn-success'} btn-icon" onclick="toggleTut('${t.id}', ${active})">${active?'🔴 Hide':'🟢 Show'}</button>
+        <button class="btn btn-primary btn-icon" onclick="editTut('${t.id}')">✏️ Edit</button>
+        <button class="btn btn-ghost btn-icon" onclick="deleteTut('${t.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openTutModal(){
+  $('tutModalTitle').textContent = '➕ Add Tutorial';
+  $('tut_id').value = '';
+  $('tut_title').value = '';
+  $('tut_videoUrl').value = '';
+  $('tut_description').value = '';
+  $('tut_status').checked = true;
+  IMG_STORE.tut_thumbnail = '';
+  if($('tut_thumbnail_preview')) $('tut_thumbnail_preview').classList.remove('show');
+  if($('tut_thumbnail_wrap')) $('tut_thumbnail_wrap').classList.remove('has-image');
+  openModal('tutModal');
+}
+function editTut(id){
+  const t = TUTORIALS.find(x=>x.id===id);
+  if(!t) return;
+  $('tutModalTitle').textContent = '✏️ Edit Tutorial';
+  $('tut_id').value = t.id;
+  $('tut_title').value = t.title || '';
+  $('tut_videoUrl').value = t.videoUrl || '';
+  $('tut_description').value = t.description || '';
+  $('tut_status').checked = t.status !== false;
+  setImagePreview('tut_thumbnail', t.thumbnail || '');
+  openModal('tutModal');
+}
+async function saveTut(){
+  const existingId = ($('tut_id').value || '').trim();
+  const id = existingId || ('tut_' + Date.now());
+  const title = $('tut_title').value.trim();
+  if(!title){ toast('Title দিন','err'); return; }
+  const payload = {
+    title,
+    thumbnail: IMG_STORE.tut_thumbnail || '',
+    videoUrl: $('tut_videoUrl').value.trim(),
+    description: $('tut_description').value.trim(),
+    status: $('tut_status').checked,
+    updatedAt: Date.now()
+  };
+  if(!existingId) payload.createdAt = Date.now();
+  try{
+    if(existingId) await db.ref('tutorials/'+id).update(payload);
+    else await db.ref('tutorials/'+id).set(payload);
+    toast('Saved','ok'); closeModal('tutModal'); loadTutorials();
+  }catch(e){ toast('হয়নি','err'); }
+}
+async function toggleTut(id, isActive){
+  try{ await db.ref('tutorials/'+id).update({ status: !isActive }); loadTutorials(); }
+  catch(e){ toast('হয়নি','err'); }
+}
+function deleteTut(id){
+  confirmAction('Delete?', async ()=>{
+    try{ await db.ref('tutorials/'+id).remove(); loadTutorials(); toast('Deleted','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   REVIEWS
+========================================================= */
+async function loadReviews(){
+  const box = $('reviewsList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('reviews').once('value');
+    const data = snap.val() || {};
+    REVIEWS = Object.keys(data).map(k=>({ id:k, ...data[k] })).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderReviews();
+  }catch(e){}
+}
+function renderReviews(){
+  const box = $('reviewsList');
+  let list = REVIEWS.slice();
+  if(REVIEW_FILTER !== 'all') list = list.filter(r=>r.status === REVIEW_FILTER);
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">⭐</div><div class="etxt">Review নেই।</div></div>'; return; }
+  box.innerHTML = list.map(r=>{
+    const st = r.status || 'pending';
+    const stars = '★'.repeat(Math.min(5, Math.max(1, num(r.rating)))) + '☆'.repeat(5 - Math.min(5, Math.max(1, num(r.rating))));
+    const av = safeUrl(r.photoUrl) || 'https://ui-avatars.com/api/?name='+encodeURIComponent(r.firstName||'U')+'&background=2f88ff&color=fff';
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <img src="${esc(av)}" />
+          <div class="card-title-text">
+            <div class="ct-name">${esc(r.firstName||('@'+(r.username||'user')))}</div>
+            <div class="ct-sub">${stars} • @${esc(r.username||'user')}</div>
+          </div>
+        </div>
+        <span class="badge badge-${st==='approved'?'completed':st==='rejected'?'rejected':'pending'}">${st.toUpperCase()}</span>
+      </div>
+      <div style="font-size:13px;color:#4a5875;line-height:1.6;margin-bottom:12px;">${esc(r.review||'')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${st!=='approved'?`<button class="btn btn-success btn-icon" onclick="approveReview('${r.id}')">✅ Approve</button>`:''}
+        ${st!=='rejected'?`<button class="btn btn-danger btn-icon" onclick="rejectReview('${r.id}')">❌ Reject</button>`:''}
+        <button class="btn btn-ghost btn-icon" onclick="deleteReview('${r.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+document.querySelectorAll('#reviewFilters .filter-chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#reviewFilters .filter-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    REVIEW_FILTER = c.getAttribute('data-rstatus');
+    renderReviews();
+  });
+});
+async function approveReview(id){
+  try{ await db.ref('reviews/'+id).update({ status:'approved' }); loadReviews(); toast('Approved','ok'); }
+  catch(e){ toast('হয়নি','err'); }
+}
+async function rejectReview(id){
+  try{ await db.ref('reviews/'+id).update({ status:'rejected' }); loadReviews(); toast('Rejected','ok'); }
+  catch(e){ toast('হয়নি','err'); }
+}
+function deleteReview(id){
+  confirmAction('Delete?', async ()=>{
+    try{ await db.ref('reviews/'+id).remove(); loadReviews(); toast('Deleted','ok'); }
+    catch(e){ toast('হয়নি','err'); }
+  });
+}
+
+/* =========================================================
+   USERS
+========================================================= */
+async function loadUsers(){
+  const box = $('usersList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('users').once('value');
+    const data = snap.val() || {};
+    USERS = Object.keys(data).map(k=>({ id:k, ...data[k] })).sort((a,b)=>(b.joinedAt||0)-(a.joinedAt||0));
+    renderUsers();
+  }catch(e){}
+}
+function renderUsers(){
+  const search = ($('userSearch').value || '').toLowerCase().trim();
+  const box = $('usersList');
+  let list = USERS.slice();
+  if(search) list = list.filter(u=>{
+    return String(u.telegramId||'').toLowerCase().includes(search)
+      || (u.username||'').toLowerCase().includes(search)
+      || (u.firstName||'').toLowerCase().includes(search);
+  });
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">👥</div><div class="etxt">User নেই।</div></div>'; return; }
+  box.innerHTML = list.map(u=>{
+    const blocked = u.status === 'blocked';
+    const av = safeUrl(u.photoUrl) || 'https://ui-avatars.com/api/?name='+encodeURIComponent(u.firstName||'U')+'&background=2f88ff&color=fff';
+    const safeName = String((u.firstName||'User')).replace(/'/g, '');
+    return `<div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <img src="${esc(av)}" />
+          <div class="card-title-text">
+            <div class="ct-name">${esc((u.firstName||'')+' '+(u.lastName||'')).trim() || 'User'}</div>
+            <div class="ct-sub">@${esc(u.username||'user')} • ID: ${esc(u.telegramId||'-')} • 💰 ৳${fmtD(u.balance||0)}</div>
+          </div>
+        </div>
+        <span class="badge ${blocked?'badge-rejected':'badge-active'}">${blocked?'Blocked':'Active'}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-purple btn-icon" onclick="openBalanceModal('${u.id}', '${safeName}', ${num(u.balance||0)})">💰 Balance</button>
+        <button class="btn ${blocked?'btn-success':'btn-danger'} btn-icon" onclick="toggleBlock('${u.id}', ${blocked})">${blocked?'🟢 Unblock':'🔴 Block'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+$('userSearch').addEventListener('input', renderUsers);
+async function toggleBlock(id, blocked){
+  try{
+    await db.ref('users/' + id).update({ status: blocked ? 'active' : 'blocked' });
+    toast(blocked ? 'Unblocked' : 'Blocked','ok');
+    loadUsers();
+  }catch(e){ toast('হয়নি','err'); }
+}
+function openBalanceModal(userId, userName, currentBalance){
+  $('bal_userId').value = userId;
+  $('bal_userName').value = userName + ' (#' + userId + ')';
+  $('bal_current').value = '৳' + fmtD(currentBalance);
+  $('bal_action').value = 'add';
+  $('bal_amount').value = '';
+  $('bal_note').value = '';
+  openModal('balanceModal');
+}
+async function submitBalanceAdjust(){
+  const userId = $('bal_userId').value;
+  const action = $('bal_action').value;
+  const amount = num($('bal_amount').value);
+  const note = $('bal_note').value.trim();
+  if(!userId){ toast('User নেই','err'); return; }
+  if(!amount || amount <= 0){ toast('Amount দিন','err'); return; }
+  try{
+    const snap = await db.ref('users/' + userId + '/balance').once('value');
+    const curr = num(snap.val()) || 0;
+    let newBal = curr;
+    if(action === 'add') newBal = curr + amount;
+    else if(action === 'subtract') newBal = Math.max(0, curr - amount);
+    else if(action === 'set') newBal = amount;
+    await db.ref('users/' + userId + '/balance').set(newBal);
+    const trxId = 'ADJ-' + Date.now().toString().slice(-8);
+    await db.ref('transactions/' + trxId).set({
+      trxId, telegramId: userId,
+      type: action === 'subtract' ? 'withdraw' : 'add',
+      label: 'Admin Adjustment' + (note ? ' • ' + note : ''),
+      amount: amount, status: 'completed', createdAt: Date.now()
+    });
+    toast('Balance Updated: ৳'+fmtD(newBal),'ok');
+    closeModal('balanceModal');
+    loadUsers();
+  }catch(e){ toast('হয়নি','err'); }
+}
+
+/* =========================================================
+   TRANSACTIONS
+========================================================= */
+async function loadAllTransactions(){
+  const box = $('transactionsList');
+  box.innerHTML = '<div class="sk sk-block"></div>';
+  try{
+    const snap = await db.ref('transactions').once('value');
+    const data = snap.val() || {};
+    ALL_TRANSACTIONS = Object.keys(data).map(k=>({ id:k, ...data[k] })).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    renderTransactions();
+  }catch(e){}
+}
+function renderTransactions(){
+  const box = $('transactionsList');
+  let list = ALL_TRANSACTIONS.slice();
+  if(TRX_FILTER !== 'all') list = list.filter(t=>t.type === TRX_FILTER);
+  if(!list.length){ box.innerHTML = '<div class="empty"><div class="eico">💳</div><div class="etxt">Transaction নেই।</div></div>'; return; }
+  box.innerHTML = list.slice(0,100).map(t=>{
+    const dt = t.createdAt ? new Date(t.createdAt).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : '';
+    const icons = { add:'➕', withdraw:'💸', shop:'🛒', meta:'🎭' };
+    return `<div class="order-item">
+      <div class="order-item-top">
+        <div>
+          <div class="order-item-id">#${esc(t.trxId||t.id)}</div>
+          <div class="order-item-sub">${icons[t.type]||'💳'} ${esc(t.label||t.type||'-')} • ${esc(dt)}</div>
+        </div>
+        <span class="badge ${statusClass(t.status)}">${statusLabel(t.status)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">
+        <div style="font-size:11.5px;color:var(--muted);">@${esc(t.username||'-')} (${esc(t.telegramId||'-')})</div>
+        <div style="font-size:15px;font-weight:900;color:#22c55e;">৳${fmtD(t.amount)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+document.querySelectorAll('#trxFilters .filter-chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#trxFilters .filter-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    TRX_FILTER = c.getAttribute('data-ttype');
+    renderTransactions();
+  });
+});
+
+/* =========================================================
+   SETTINGS
+========================================================= */
+async function loadSettingsForm(){
+  try{
+    const snap = await db.ref('settings').once('value');
+    SETTINGS = snap.val() || {};
+  }catch(e){ SETTINGS = {}; }
+  $('s_appName').value = SETTINGS.appName || 'GBS BD COIN BAY';
+  $('s_tagline').value = SETTINGS.tagline || 'Coin Sell • Fast Payment';
+  $('s_supportChannelUrl').value = SETTINGS.supportChannelUrl || '';
+  $('s_joinBtnText').value = SETTINGS.joinBtnText || 'Join Official Channel';
+  $('s_sendMoneyFee').value = SETTINGS.sendMoneyFee || 5;
+  $('s_metaDefaultPrice').value = SETTINGS.metaDefaultPrice || 0.50;
+  $('s_notice').value = SETTINGS.notice || '';
+  $('s_contactInfo').value = SETTINGS.contactInfo || '';
+  $('s_footerText').value = SETTINGS.footerText || '💎 GBS BD COIN BAY • v1.0';
+  $('s_maintenanceMode').checked = SETTINGS.maintenanceMode === true;
+  $('s_maintenanceText').value = SETTINGS.maintenanceText || 'বর্তমানে আপডেট করা হচ্ছে।';
+  setImagePreview('s_logo', SETTINGS.logo || '');
+  setImagePreview('s_splashImage', SETTINGS.splashImage || '');
+}
+async function saveSettings(){
+  const payload = {
+    appName: $('s_appName').value.trim(),
+    tagline: $('s_tagline').value.trim(),
+    logo: IMG_STORE.s_logo || '',
+    splashImage: IMG_STORE.s_splashImage || '',
+    supportChannelUrl: $('s_supportChannelUrl').value.trim(),
+    joinBtnText: $('s_joinBtnText').value.trim(),
+    sendMoneyFee: num($('s_sendMoneyFee').value) || 5,
+    metaDefaultPrice: num($('s_metaDefaultPrice').value) || 0.50,
+    notice: $('s_notice').value.trim(),
+    noticeEnabled: true,
+    contactInfo: $('s_contactInfo').value.trim(),
+    footerText: $('s_footerText').value.trim(),
+    maintenanceMode: $('s_maintenanceMode').checked,
+    maintenanceText: $('s_maintenanceText').value.trim()
+  };
+  try{
+    await db.ref('settings').update(payload);
+    toast('Settings Saved','ok');
+  }catch(e){ toast('Save হয়নি','err'); }
+}
+
+/* =========================================================
+   MODAL CLOSE
+========================================================= */
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target === m) m.classList.remove('show'); });
+});
+
+/* =========================================================
+   BOOT
+========================================================= */
+function bootAdmin(){
+  loadDashboard();
+  loadSettingsForm();
+}
+(function checkAutoLogin(){
+  try{
+    if(sessionStorage.getItem('gbs_admin_ok') === '1'){
+      $('loginScreen').style.display = 'none';
+      $('adminApp').classList.add('active');
+      bootAdmin();
+    } else {
+      setTimeout(()=>{ try{ $('loginPass').focus(); }catch(e){} }, 200);
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
